@@ -8,34 +8,43 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 🎨 ဇယားအတွင်းရှိ Data နှင့် Header စာသားများအားလုံးကို လုံးဝစာကြောင်းမကွဲဘဲ အလယ်တည့်တည့်ကျစေမည့် CSS
+# 🎨 ဇယားများ၏ ခေါင်းစဉ် (Header)၊ စာသား (Data) နှင့် ကော်လံအားလုံးကို လုံးဝ (၁၀၀%) အလယ်ဗဟိုသို့ ရောက်ရှိစေမည့် Ultimate CSS
 st.html("""
 <style>
-    /* ဇယားခေါင်းစဉ် (Headers) များကို လုံးဝ စာကြောင်းမခွဲဘဲ အလယ်ပို့ရန် */
-    th, [data-testid="stTableHeader"] div {
+    /* ၁။ Streamlit Dataframe ၏ Headers (ခေါင်းစဉ်စာသားများ) အားလုံးကို အလယ်ပို့ခြင်း */
+    div[data-testid="stDataFrame"] iframe, 
+    div[data-testid="stDataFrame"] table,
+    div[data-testid="stDataFrame"] th,
+    div[data-testid="stDataFrame"] td,
+    th[data-testid="stTableHeader"],
+    th[data-testid="stTableHeader"] div,
+    [data-testid="stHeader"] div,
+    .stDataFrame div,
+    .st-key-dataframe th,
+    .st-key-dataframe td {
         text-align: center !important;
         justify-content: center !important;
-        display: flex !important;
-        white-space: nowrap !important;
-        word-break: keep-all !important;
+        align-items: center !important;
+        display: flex-inline !important;
+        white-space: nowrap !important; /* စာကြောင်းအောက်မဆင်းစေရန် */
     }
-    
-    /* ဇယားထဲက ဒေတာ Cell တန်ဖိုးများကိုလည်း တစ်ကြောင်းတည်း အလယ်ပို့ရန် */
-    td, [data-testid="styled-cell"] div {
+
+    /* ၂။ ကော်လံအတွင်းရှိ စာသားများကို ကပ်မနေစေဘဲ အလယ်တည့်တည့်သို့ ကွက်တိညှိခြင်း */
+    td div, th div {
         text-align: center !important;
-        white-space: nowrap !important;
-        word-break: keep-all !important;
+        justify-content: center !important;
+        margin: 0 auto !important;
     }
-    
-    /* စုစုပေါင်းဇယားကွက် သပ်ရပ်စေရန် */
-    div[data-testid="stTable"] td {
+
+    /* ၃။ ဇယား၏ cell တစ်ခုချင်းစီကို စနစ်တကျ အလယ်ပို့ခြင်း */
+    [data-testid="styled-cell"] {
         text-align: center !important;
-        white-space: nowrap !important;
+        justify-content: center !important;
     }
 </style>
 """)
 
-# App Header (အဓိက ခေါင်းစဉ်ကြီးကိုလည်း HTML သုံး၍ အလယ်ပို့ထားပါသည်)
+# App Header (HTML သုံး၍ အလယ်သို့ ရာနှုန်းပြည့် ပို့ထားပါသည်)
 st.markdown("<h1 style='text-align: center;'>📱 Engineer Accessories Tracker</h1>", unsafe_allow_html=True)
 
 # ⚠️ သင်၏ Google Sheet CSV Link အမှန်ကို အောက်ကနေရာတွင် ထည့်ပါ
@@ -130,10 +139,10 @@ if df is not None:
 
     # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
     if not result_df.empty:
-        # ⚠️ Title (Subheader) ကို HTML သုံးပြီး အလယ်တည့်တည့်သို့ အတင်းပို့လိုက်ခြင်းဖြစ်သည်
+        # Title (Subheader) ကို အလယ်ပို့ခြင်း
         st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား</h3>", unsafe_allow_html=True)
         
-        # ကော်လံအလိုက် တန်ဖိုးများနှင့် စာသားများကို အလယ် (Center) ရောက်စေရန်
+        # ကော်လံအလိုက် တန်ဖိုးများကို အလယ် (Center) ရောက်စေရန် အတိအကျညွှန်ကြားချက် ထည့်ခြင်း
         custom_align_config = {}
         for col in result_df.columns:
             if pd.api.types.is_numeric_dtype(result_df[col]):
@@ -150,8 +159,8 @@ if df is not None:
         )
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
-        st.write("") # ခြားရန်
-        # ⚠️ စုစုပေါင်းဇယားခေါင်းစဉ် "Total Used Summary" ကိုလည်း HTML သုံးပြီး အလယ်တည့်တည့်သို့ အတင်းပို့လိုက်ပါသည်
+        st.write("") 
+        # Title (Subheader) ကို အလယ်ပို့ခြင်း
         st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used Summary</h3>", unsafe_allow_html=True)
         
         # ကိန်းဂဏန်း Column များကိုသာ စုစုပေါင်းတွက်မည်
