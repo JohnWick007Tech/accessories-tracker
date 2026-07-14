@@ -58,7 +58,7 @@ st.html("""
 """)
 
 # App Header (HTML သုံး၍ အလယ်သို့ ပို့ထားပါသည်)
-st.markdown("<h1 style='text-align: center;'>📱 Eng's Usage Tracker</h1>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>📱 Eng's Usage Tracker</h2>", unsafe_allow_html=True)
 
 # ⚠️ သင်၏ Google Sheet CSV Link အမှန်ကို အောက်ကနေရာတွင် ထည့်ပါ
 GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc/gviz/tq?tqx=out:csv"
