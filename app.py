@@ -45,15 +45,22 @@ def load_data():
         df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
     return df
 
+# ဒေတာ ဆွဲယူခြင်းအား try-except ဖြင့် ဖမ်းယူခြင်း
 try:
     df = load_data()
-    
+    data_loaded = True
+except Exception as e:
+    st.error(f"❌ Google Sheet ဒေတာ ချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
+    data_loaded = False
+
+# ဒေတာ အောင်မြင်စွာ ရရှိမှသာ အောက်ပါ အလုပ်များကို ဆက်လုပ်မည်
+if data_loaded:
     # ၁။ ကော်လံအသစ်များနှင့် နာမည်များကို ပြောင်းလဲခြင်း
     columns_mapping = {
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
-        'TKT/POI/CPE': 'TKT/POI/CPE',                         # မူရင်း ကော်လံအသစ်
-        'Patch Cords(SC/APC) 1M': 'Patch Cords\n(1M)',          # စာတန်း ၂ ဆင့်ခွဲရန်
+        'TKT/POI/CPE': 'TKT/POI/CPE',                         
+        'Patch Cords(SC/APC) 1M': 'Patch Cords\n(1M)',          
         'Patch Cords(SC/APC) 1.5M': 'Patch Cords\n(1.5M)',
         'One Core OTB Box': 'One Core\nOTB Box',
         'Sleeve': 'Sleeve',
@@ -115,15 +122,4 @@ try:
         
         if not numeric_cols.empty:
             summary_list = []
-            for col in numeric_cols:
-                total_val = result_df[col].sum()
-                
-                # ဒဿမနောက်က 0 ဖြစ်နေလျှင် ကိန်းပြည့်ပဲပြရန်၊ မဟုတ်လျှင် ဒဿမ ၁ နေရာပဲပြရန်
-                if total_val % 1 == 0:
-                    formatted_val = f"{int(total_val)}"
-                else:
-                    formatted_val = f"{total_val:.1f}"
-                    
-                summary_list.append({'ပစ္စည်းအမျိုးအမည်': col, 'စုစုပေါင်းအရေအတွက်': formatted_val})
-            
-            summary_table = pd
+            for col in numeric
