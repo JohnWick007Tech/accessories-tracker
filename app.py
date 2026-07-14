@@ -108,7 +108,7 @@ if df is not None:
     columns_mapping = {
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
-        'TKT/POI/CPE': 'TKT/POI/CPE',                        
+        'TKT/POI': 'TKT/POI',                        
         'Patch Cords(SC/APC) 1M': 'Patch Cords (1M)',          
         'Patch Cords(SC/APC) 1.5M': 'Patch Cords (1.5M)',
         sleeve_col_in_sheet: 'Sleeve with 2 Steels',
