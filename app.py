@@ -11,46 +11,37 @@ st.set_page_config(
 # 🎨 ဇယားကို Screen အတင်းမညှစ်ဘဲ စာလုံးအရှည်အတိုင်း တစ်ကြောင်းတည်း (Center) ပို့ပေးမည့် CSS
 st.html("""
 <style>
-    /* ၁။ ဇယားတစ်ခုလုံးကို ဖုန်းပေါ်တွင် မညှပ်သွားစေဘဲ ဘေးတိုက်ရွှေ့ကြည့်နိုင်အောင် ပြုလုပ်ခြင်း */
     div[data-testid="stTable"] {
         overflow-x: auto !important;
         display: block !important;
         width: 100% !important;
     }
-    
-    /* ၂။ ကော်လံများကို Screen အကျယ်အတိုင်း ညှစ်မထားဘဲ စာလုံးအလိုက် အလိုအလျောက် ဆွဲဆန့်စေခြင်း */
     div[data-testid="stTable"] table {
-        table-layout: auto !important; /* စာလုံးအရှည်အတိုင်း ကော်လံ ကျယ်ထွက်သွားစေရန် */
+        table-layout: auto !important;
         width: auto !important;
         min-width: 100% !important;
         margin-left: auto !important;
         margin-right: auto !important;
         border-collapse: collapse !important;
     }
-
-    /* ၃။ Headers (ခေါင်းစဉ်များ) ကို တစ်ကြောင်းတည်း ဒေါင်လိုက်/အလျားလိုက် အလယ်ပို့ခြင်း */
     div[data-testid="stTable"] th,
     div[data-testid="stTable"] th * {
         text-align: center !important;
         vertical-align: middle !important;
-        white-space: nowrap !important; /* စာလုံးလုံးဝ အောက်မဆင်းစေရန် */
+        white-space: nowrap !important;
         word-break: keep-all !important;
     }
-    
     div[data-testid="stTable"] th {
         background-color: #f0f2f6 !important;
         padding: 12px 20px !important;
     }
-    
-    /* ၄။ Cells (ဒေတာများ) ကို တစ်ကြောင်းတည်း ဒေါင်လိုက်/အလျားလိုက် အလယ်ပို့ခြင်း */
     div[data-testid="stTable"] td,
     div[data-testid="stTable"] td * {
         text-align: center !important;
         vertical-align: middle !important;
-        white-space: nowrap !important; /* နာမည်ရှည်များပါ လုံးဝတစ်ကြောင်းတည်း ဖြစ်စေရန် */
+        white-space: nowrap !important;
         word-break: keep-all !important;
     }
-    
     div[data-testid="stTable"] td {
         padding: 10px 20px !important;
     }
@@ -64,8 +55,8 @@ st.markdown("<h2 style='text-align: center;'>📱 Eng Usage Tracker</h2>", unsaf
 GSHEET_BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
 
 # Tab နာမည်များ သတ်မှတ်ခြင်း
-USAGE_TAB_NAME = "EngUsageTracker"  # မူရင်းသုံးစွဲမှုစာရင်း Tab
-OUT_TAB_NAME = "Out Of PM"          # ဒုတိယပစ္စည်းထုတ်ယူသွားသည့် Tab
+USAGE_TAB_NAME = "EngUsageTracker"
+OUT_TAB_NAME = "Out Of PM"
 
 USAGE_CSV_URL = f"{GSHEET_BASE_URL}/gviz/tq?tqx=out:csv&sheet={USAGE_TAB_NAME}"
 OUT_CSV_URL = f"{GSHEET_BASE_URL}/gviz/tq?tqx=out:csv&sheet={OUT_TAB_NAME}"
@@ -81,6 +72,7 @@ def load_usage_data():
 def load_out_data():
     try:
         df_out = pd.read_csv(OUT_CSV_URL)
+        # Google Sheet Format အမျိုးမျိုး (ဥပမာ- 11-Jul-26 သို့မဟုတ် 2026-07-11) ကို standard %Y-%m-%d သို့ ပြောင်းလဲခြင်း
         if 'Date' in df_out.columns:
             df_out['Date'] = pd.to_datetime(df_out['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
         return df_out
@@ -149,7 +141,7 @@ if df is not None:
             options=["All Dates"] + list(dates_list)
         )
 
-    # ၃။ Filter Logic
+    # ၃။ Filter Logic (မူရင်း Usage Table အတွက်)
     result_df = filtered_df.copy()
     
     if selected_engineer != "All Engineers":
@@ -162,4 +154,77 @@ if df is not None:
 
     # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
     if not result_df.empty:
-        st.markdown("<h3 style
+        st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 Engineers Usages Table</h3>", unsafe_allow_html=True)
+        
+        formatted_df = result_df.copy()
+        for col in formatted_df.select_dtypes(include='number').columns:
+            formatted_df[col] = formatted_df[col].apply(lambda x: f"{int(x)}" if x % 1 == 0 else f"{x:.1f}")
+            
+        st.table(formatted_df)
+        
+        # ၅။ စုစုပေါင်းအရေအတွက်နှင့် ဒုတိယ Tab (Out Of PM) မှ နှုတ်ယူတွက်ချက်မှုအပိုင်း
+        st.write("") 
+        st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used Summary</h3>", unsafe_allow_html=True)
+        
+        numeric_cols = result_df.select_dtypes(include='number').columns
+        
+        if not numeric_cols.empty:
+            summary_list = []
+            
+            # ဒုတိယ Tab (Out Of PM) ရဲ့ Product Name စာသားများကို မူရင်းဇယားကော်လံများနှင့် Mapping လုပ်ခြင်း
+            product_name_mapping = {
+                'SC-APC,SM,SX 3.0MM (1M)': 'Patch Cords (1M)',
+                'Sleeves with 2 steels': 'Sleeve with 2 Steels',
+                'Pencil Kit (Standard)': 'Standard (Pencil Kit)',
+                'Pencil Kit (Customized)': 'Customize (Pencil Kit)',
+                'Customize (Pencil Kit)': 'Customize (Pencil Kit)',
+                'Patch Cords (1.5M)': 'Patch Cords (1.5M)'
+            }
+            
+            for col in numeric_cols:
+                # က။ မူရင်း သုံးစွဲမှု စုစုပေါင်း (Total Usage)
+                total_usage_val = result_df[col].sum()
+                
+                # ခ။ ဒုတိယ Tab (Out Of PM) ထဲက 'Out' အရေအတွက်ကို Dropdown Filter အလိုက် ရှာဖွေပေါင်းယူခြင်း
+                total_out_val = 0
+                if df_out is not None and 'Product Name' in df_out.columns and 'Out' in df_out.columns:
+                    temp_out_df = df_out.copy()
+                    
+                    # ရှေ့/နောက် space ဖယ်ပြီး map လုပ်ခြင်း
+                    temp_out_df['Mapped_Product'] = temp_out_df['Product Name'].astype(str).str.strip().map(product_name_mapping).fillna(temp_out_df['Product Name'].astype(str).str.strip())
+                    
+                    # သက်ဆိုင်ရာ Accessories အလိုက် စစ်ထုတ်ခြင်း
+                    item_out_df = temp_out_df[temp_out_df['Mapped_Product'].str.lower() == col.strip().lower()]
+                    
+                    # 🔹 Dropdown က Filter တွေနဲ့ Out Of PM Tab ကို ညှိနှိုင်းစစ်ထုတ်ခြင်း
+                    if selected_engineer != "All Engineers" and 'Eng Name' in item_out_df.columns:
+                        # နာမည်နောက်က ID ပါတာမပါတာ အဆင်ပြေအောင် ပါဝင်မှုရှိမရှိ (Substring check) ဖြင့် စစ်ဆေးခြင်း
+                        clean_eng_name = selected_engineer.split('-')[0].strip() # ဥပမာ 'Kaung Khant Kyaw-10' ကို 'Kaung Khant Kyaw' ပြောင်းသည်
+                        item_out_df = item_out_df[item_out_df['Eng Name'].astype(str).str.contains(clean_eng_name, case=False, na=False)]
+                        
+                    if selected_date != "All Dates" and 'Date' in item_out_df.columns:
+                        item_out_df = item_out_df[item_out_df['Date'] == selected_date]
+                        
+                    # Out အရေအတွက် စုစုပေါင်းကို ပေါင်းယူခြင်း
+                    total_out_val = pd.to_numeric(item_out_df['Out'], errors='coerce').sum()
+                
+                # 🎯 ဂ။ Out Of PM ထဲကနေ Total Usage ကို နှုတ်ခြင်း (Return to PM = Out - Total Usage)
+                return_to_pm_val = total_out_val - total_usage_val
+                
+                def format_num(val):
+                    if val % 1 == 0:
+                        return f"{int(val)}"
+                    return f"{val:.1f}"
+                
+                summary_list.append({
+                    'Accessories': col, 
+                    'Total Out (Store)': format_num(total_out_val),
+                    'Total Usage (Field)': format_num(total_usage_val),
+                    'Return to PM Usage': format_num(return_to_pm_val)
+                })
+            
+            summary_table = pd.DataFrame(summary_list)
+            st.table(summary_table)
+            
+    else:
+        st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
