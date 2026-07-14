@@ -8,6 +8,24 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# 🎨 ဇယားများ၏ ခေါင်းစဉ် (Header Texts) များကိုပါ အလယ် (Center) ရောက်စေရန် CSS ထည့်သွင်းခြင်း
+# streamlit component format သစ်အရ လုံခြုံစိတ်ချစွာ အသုံးပြုနိုင်ပါသည်။
+st.html("""
+<style>
+    /* Table Headers ကို အလယ်ပို့ရန် */
+    th {
+        text-align: center !important;
+    }
+    div[data-testid="stTableHeader"] {
+        text-align: center !important;
+    }
+    /* Dataframe column headers များကို center ညှိရန် */
+    .st-ae, .st-af, .st-ag, .st-ah {
+        text-align: center !important;
+    }
+</style>
+""")
+
 # App Header
 st.title("📱 Engineer Accessories Tracker")
 
@@ -34,7 +52,6 @@ if df is not None:
     
     # 🔍 Google Sheet ထဲတွင် Sleeve / Sleeves Column နာမည်ကို ရှာဖွေခြင်း
     sleeve_col_in_sheet = None
-    # ဖြစ်နိုင်ခြေရှိသော စာလုံးပေါင်းများကို စစ်ဆေးသည်
     possible_sleeve_names = [
         'Sleeves with 2 steels', 
         'Sleeve with 2 Steels', 
@@ -47,14 +64,12 @@ if df is not None:
             sleeve_col_in_sheet = col
             break
             
-    # အကယ်၍ ရှာမတွေ့ပါက Google Sheet ထဲတွင် 'Sleeve' သို့မဟုတ် 'Sleeves' စကားလုံးပါဝင်သော ကော်လံကို ရှာရန်
     if not sleeve_col_in_sheet:
         for col in df.columns:
             if 'sleeve' in col.lower() and '2' in col:
                 sleeve_col_in_sheet = col
                 break
                 
-    # တစ်ခုမှ ရှာမတွေ့သေးပါက default အနေဖြင့် 'Sleeve with 2 Steels' ကို သုံးမည်
     if not sleeve_col_in_sheet:
         sleeve_col_in_sheet = 'Sleeve with 2 Steels'
 
@@ -65,12 +80,11 @@ if df is not None:
         'TKT/POI/CPE': 'TKT/POI/CPE',                         
         'Patch Cords(SC/APC) 1M': 'Patch Cords (1M)',          
         'Patch Cords(SC/APC) 1.5M': 'Patch Cords (1.5M)',
-        sleeve_col_in_sheet: 'Sleeve with 2 Steels', # အလိုအလျောက် ရှာဖွေတွေ့ရှိထားသော ကော်လံနာမည်ကို သုံးမည်
+        sleeve_col_in_sheet: 'Sleeve with 2 Steels',
         'Customize (Pencil Kit , white)': 'Customize (Pencil Kit)',
         'Standard (Pencil Kit , white)': 'Standard (Pencil Kit)'
     }
     
-    # လက်ရှိ Sheet ထဲမှာ ရှိနေတဲ့ column တွေကိုပဲ ယူမည်
     available_cols = [col for col in columns_mapping.keys() if col in df.columns]
     filtered_df = df[available_cols].copy()
     
@@ -107,9 +121,9 @@ if df is not None:
 
     # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
     if not result_df.empty:
-        st.subheader("📊 Engineers Usage Table")
+        st.subheader("📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား")
         
-        # စာသားရော၊ ကိန်းဂဏန်းပါ အကုန်လုံးကို အလယ် (Center) ရောက်စေရန် သတ်မှတ်ခြင်း
+        # ကော်လံအောက်က တန်ဖိုးများကို အလယ် (Center) ရောက်စေရန်
         custom_align_config = {}
         for col in result_df.columns:
             if pd.api.types.is_numeric_dtype(result_df[col]):
@@ -124,7 +138,7 @@ if df is not None:
             column_config=custom_align_config
         )
         
-        # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း (ဒဿမ ရှင်းလင်းရေး အပါအဝင်)
+        # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
         st.subheader("📈 Total Used Summary")
         
         # ကိန်းဂဏန်း Column များကိုသာ စုစုပေါင်းတွက်မည်
@@ -145,7 +159,7 @@ if df is not None:
             
             summary_table = pd.DataFrame(summary_list)
             
-            # စုစုပေါင်းပြသမည့် ဇယားမှ ကော်လံနှစ်ခုစလုံးကိုလည်း အလယ်ဗဟို (Center) သို့ ပို့ခြင်း
+            # စုစုပေါင်းပြသမည့် ဇယားမှ တန်ဖိုးများကို အလယ် (Center) သို့ ပို့ခြင်း
             summary_align_config = {
                 'Accessories': st.column_config.TextColumn(alignment="center"),
                 'Total Usage': st.column_config.TextColumn(alignment="center")
