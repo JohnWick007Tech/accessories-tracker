@@ -76,7 +76,7 @@ df = None
 try:
     df = load_data()
 except Exception as e:
-    st.error(f"❌ ချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
+    st.error(f"❌ ချက်ဆက်မှု အဆင်မပြေပါ- {e}")
 
 # ဒေတာ အောင်မြင်စွာ ရရှိမှသာ အောက်ပါ UI ပိုင်းများကို လုပ်ဆောင်မည်
 if df is not None:
@@ -108,5 +108,86 @@ if df is not None:
     columns_mapping = {
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
-        'TKT/POI/CPE': 'TKT/POI/CPE',                        
-        'Patch Cords(SC/APC)
+        'TKT/POI/CPE': 'TKT/POI/CPE',                         
+        'Patch Cords(SC/APC) 1M': 'Patch Cords (1M)',          
+        'Patch Cords(SC/APC) 1.5M': 'Patch Cords (1.5M)',
+        sleeve_col_in_sheet: 'Sleeve with 2 Steels',
+        'Customize (Pencil Kit , white)': 'Customize (Pencil Kit)',
+        'Standard (Pencil Kit , white)': 'Standard (Pencil Kit)'
+    }
+    
+    available_cols = [col for col in columns_mapping.keys() if col in df.columns]
+    filtered_df = df[available_cols].copy()
+    
+    # Column နာမည်များကို အစားထိုးခြင်း
+    filtered_df = filtered_df.rename(columns={col: columns_mapping[col] for col in available_cols})
+
+    # ၂။ Dropdown ရွေးချယ်မှုအပိုင်း (2-Column ဖြင့် စနစ်တကျခွဲထားခြင်း)
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        engineers_list = sorted(filtered_df['Engineer Name'].dropna().unique())
+        selected_engineer = st.selectbox(
+            "♻️ Filter by Engineer Name:",
+            options=["All Engineers"] + list(engineers_list)
+        )
+        
+    with col2:
+        dates_list = sorted(filtered_df['Date'].dropna().unique(), reverse=True)
+        selected_date = st.selectbox(
+            "📅 Filter by Date:",
+            options=["All Dates"] + list(dates_list)
+        )
+
+    # ၃။ Filter Logic (ရွေးချယ်မှုအပေါ်မူတည်ပြီး စစ်ထုတ်ခြင်း)
+    result_df = filtered_df.copy()
+    
+    if selected_engineer != "All Engineers":
+        result_df = result_df[result_df['Engineer Name'] == selected_engineer]
+        
+    if selected_date != "All Dates":
+        result_df = result_df[result_df['Date'] == selected_date]
+
+    st.divider()
+
+    # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
+    if not result_df.empty:
+        # Title (Subheader) ကို အလယ်ပို့ခြင်း
+        st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 Engineers Usages Table</h3>", unsafe_allow_html=True)
+        
+        # ကိန်းဂဏန်းဒေတာများကို integer ဖြစ်လျှင် ဒဿမဖြုတ်ရန် format ပြုလုပ်ခြင်း
+        formatted_df = result_df.copy()
+        for col in formatted_df.select_dtypes(include='number').columns:
+            formatted_df[col] = formatted_df[col].apply(lambda x: f"{int(x)}" if x % 1 == 0 else f"{x:.1f}")
+            
+        # CSS အမိန့်နာခံသော st.table ကို အသုံးပြုပါသည်
+        st.table(formatted_df)
+        
+        # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
+        st.write("") 
+        # Title (Subheader) ကို အလယ်ပို့ခြင်း
+        st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used Summary</h3>", unsafe_allow_html=True)
+        
+        # ကိန်းဂဏန်း Column များကိုသာ စုစုပေါင်းတွက်မည်
+        numeric_cols = result_df.select_dtypes(include='number').columns
+        
+        if not numeric_cols.empty:
+            summary_list = []
+            for col in numeric_cols:
+                total_val = result_df[col].sum()
+                
+                # ဒဿမနောက်က 0 ဖြစ်နေလျှင် ကိန်းပြည့်ပဲပြရန်၊ မဟုတ်လျှင် ဒဿမ ၁ နေရာပဲပြရန်
+                if total_val % 1 == 0:
+                    formatted_val = f"{int(total_val)}"
+                else:
+                    formatted_val = f"{total_val:.1f}"
+                    
+                summary_list.append({'Accessories': col, 'Total Usage': formatted_val})
+            
+            summary_table = pd.DataFrame(summary_list)
+            
+            # စုစုပေါင်းဇယားကိုလည်း ခေါင်းစဉ်ရော အချက်အလက်ပါ Center ကျစေရန် st.table ဖြင့် ရေးဆွဲခြင်း
+            st.table(summary_table)
+            
+    else:
+        st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
