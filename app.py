@@ -4,10 +4,36 @@ import pandas as pd
 # Page Configuration (ဖုန်းအတွက် ပိုမိုသေသပ်သော အခင်းအကျင်း)
 st.set_page_config(page_title="Accessories Tracker", layout="centered")
 
+# CSS သုံးပြီး စာသားများ၊ ခေါင်းစဉ်များနှင့် ဇယားများကို စခရင်၏ အလယ်ဗဟို (Center) တည့်တည့်သို့ ပို့ခြင်း
+st.markdown("""
+    <style>
+    /* ခေါင်းစဉ်များနှင့် စာသားများကို အလယ်ပို့ရန် */
+    .stApp h1, .stApp h2, .stApp h3, .stApp p, .stMarkdown {
+        text-align: center !important;
+    }
+    
+    /* Dropdown ခေါင်းစဉ်များကို အလယ်ပို့ရန် */
+    div[data-testid="stWidgetLabel"] {
+        text-align: center !important;
+        width: 100%;
+    }
+    
+    /* Summary Table နှင့် အခြား Element များကို အလယ်ပို့ရန် */
+    div[data-testid="stTable"] table {
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center !important;
+    }
+    th, td {
+        text-align: center !important;
+    }
+    </style>
+""", unsafe_allowed_html=True)
+
 st.title("📱 Engineer Accessories Tracker")
 
 # ⚠️ သင်၏ Google Sheet CSV Link အမှန်ကို အောက်ကနေရာတွင် ထည့်ပါ
-GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc/gviz/tq?tqx=out:csv"
+GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1abc123XYZ/gviz/tq?tqx=out:csv"
 
 @st.cache_data(ttl=30) # Data update မြန်စေရန် စက္ကန့် ၃၀ သတ်မှတ်
 def load_data():
@@ -21,13 +47,12 @@ def load_data():
 try:
     df = load_data()
     
-    # ၁။ လိုချင်သော ကော်လံများ စစ်ထုတ်ခြင်း (C နှင့် F Column များဖြစ်သော Township နှင့် Car-ID အပါအဝင်)
+    # ၁။ ကော်လံများ စစ်ထုတ်ခြင်း (Township/Car-ID ဖယ်ပြီး TKT/POI/CPE ကော်လံကို ထည့်သွင်းထားသည်)
     columns_mapping = {
         'Date': 'Date',
-        'Township': 'Township',                  # Google Sheet C Column
-        'Engineer Car-ID': 'Car-ID',            # Google Sheet F Column
         'Engineer Name': 'Engineer Name',
-        'Patch Cords(SC/APC) 1M': 'Patch Cords\n(1M)',          # Title ကို ၂ ဆင့်ခွဲရန် \n သုံးထားပါသည်
+        'TKT/POI/CPE': 'TKT/POI/CPE',                         # မူရင်း ကော်လံအသစ်
+        'Patch Cords(SC/APC) 1M': 'Patch Cords\n(1M)',          # Title ကို ၂ ဆင့်ခွဲရန်
         'Patch Cords(SC/APC) 1.5M': 'Patch Cords\n(1.5M)',
         'One Core OTB Box': 'One Core\nOTB Box',
         'Sleeve': 'Sleeve',
@@ -102,7 +127,13 @@ try:
                 summary_list.append({'ပစ္စည်းအမျိုးအမည်': col, 'စုစုပေါင်းအရေအတွက်': formatted_val})
             
             summary_table = pd.DataFrame(summary_list)
-            st.table(summary_table)
+            
+            # စုစုပေါင်းပြသမည့် ဇယားကိုလည်း အလယ်တည့်တည့်ကျအောင် st.dataframe သုံးပြီး ပြသခြင်း
+            st.dataframe(
+                summary_table,
+                use_container_width=True,
+                hide_index=True
+            )
             
     else:
         st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
