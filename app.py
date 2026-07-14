@@ -8,43 +8,43 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 🎨 ဇယားများ၏ ခေါင်းစဉ် (Header)၊ စာသား (Data) နှင့် ကော်လံအားလုံးကို လုံးဝ (၁၀၀%) အလယ်ဗဟိုသို့ ရောက်ရှိစေမည့် Ultimate CSS
+# 🎨 ဇယားအားလုံးကို ၁၀၀% စာလုံးမကျိုးစေဘဲ အလယ်တည့်တည့် (Center) သို့ ပို့ပေးသည့် Ultimate CSS
 st.html("""
 <style>
-    /* ၁။ Streamlit Dataframe ၏ Headers (ခေါင်းစဉ်စာသားများ) အားလုံးကို အလယ်ပို့ခြင်း */
-    div[data-testid="stDataFrame"] iframe, 
-    div[data-testid="stDataFrame"] table,
-    div[data-testid="stDataFrame"] th,
-    div[data-testid="stDataFrame"] td,
-    th[data-testid="stTableHeader"],
-    th[data-testid="stTableHeader"] div,
-    [data-testid="stHeader"] div,
-    .stDataFrame div,
-    .st-key-dataframe th,
-    .st-key-dataframe td {
-        text-align: center !important;
-        justify-content: center !important;
-        align-items: center !important;
-        display: flex-inline !important;
-        white-space: nowrap !important; /* စာကြောင်းအောက်မဆင်းစေရန် */
+    /* ၁။ ဇယားတစ်ခုလုံးကို ဖုန်းစခရင်ပေါ်တွင် မညှပ်သွားစေဘဲ ဘေးတိုက်ရွှေ့ကြည့်နိုင်အောင် (Scrollable) ပြုလုပ်ခြင်း */
+    div[data-testid="stTable"] {
+        overflow-x: auto !important;
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    div[data-testid="stTable"] table {
+        width: 100% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        border-collapse: collapse !important;
     }
 
-    /* ၂။ ကော်လံအတွင်းရှိ စာသားများကို ကပ်မနေစေဘဲ အလယ်တည့်တည့်သို့ ကွက်တိညှိခြင်း */
-    td div, th div {
+    /* ၂။ Headers (ခေါင်းစဉ်စာသား) အားလုံးကို အလယ်ပို့ပြီး စာလုံးလုံးဝမကွဲစေရန် ထိန်းချုပ်ခြင်း */
+    div[data-testid="stTable"] th {
         text-align: center !important;
-        justify-content: center !important;
-        margin: 0 auto !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important; /* စာလုံးအောက်ကြောင်းဆင်းမသွားစေရန် */
+        background-color: #f0f2f6 !important;
+        padding: 10px 15px !important;
     }
-
-    /* ၃။ ဇယား၏ cell တစ်ခုချင်းစီကို စနစ်တကျ အလယ်ပို့ခြင်း */
-    [data-testid="styled-cell"] {
+    
+    /* ၃။ Cells (အချက်အလက်) အားလုံးကို အလယ်ပို့ပြီး စာလုံးလုံးဝမကွဲစေရန် ထိန်းချုပ်ခြင်း */
+    div[data-testid="stTable"] td {
         text-align: center !important;
-        justify-content: center !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important; /* နာမည်ရှည်များ စာကြောင်းမကွဲစေရန် */
+        padding: 8px 15px !important;
     }
 </style>
 """)
 
-# App Header (HTML သုံး၍ အလယ်သို့ ရာနှုန်းပြည့် ပို့ထားပါသည်)
+# App Header (HTML သုံး၍ အလယ်သို့ ပို့ထားပါသည်)
 st.markdown("<h1 style='text-align: center;'>📱 Engineer Accessories Tracker</h1>", unsafe_allow_html=True)
 
 # ⚠️ သင်၏ Google Sheet CSV Link အမှန်ကို အောက်ကနေရာတွင် ထည့်ပါ
@@ -139,28 +139,20 @@ if df is not None:
 
     # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
     if not result_df.empty:
-        # Title (Subheader) ကို အလယ်ပို့ခြင်း
+        # Title (Subheader) ကို HTML သုံး၍ အလယ်ပို့ခြင်း
         st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား</h3>", unsafe_allow_html=True)
         
-        # ကော်လံအလိုက် တန်ဖိုးများကို အလယ် (Center) ရောက်စေရန် အတိအကျညွှန်ကြားချက် ထည့်ခြင်း
-        custom_align_config = {}
-        for col in result_df.columns:
-            if pd.api.types.is_numeric_dtype(result_df[col]):
-                custom_align_config[col] = st.column_config.NumberColumn(alignment="center")
-            else:
-                custom_align_config[col] = st.column_config.TextColumn(alignment="center")
-        
-        # DataFrame ပြသခြင်း
-        st.dataframe(
-            result_df, 
-            use_container_width=True, 
-            hide_index=True,
-            column_config=custom_align_config
-        )
+        # ကိန်းဂဏန်းဒေတာများကို integer ဖြစ်လျှင် ဒဿမဖြုတ်ရန် format ပြုလုပ်ခြင်း
+        formatted_df = result_df.copy()
+        for col in formatted_df.select_dtypes(include='number').columns:
+            formatted_df[col] = formatted_df[col].apply(lambda x: f"{int(x)}" if x % 1 == 0 else f"{x:.1f}")
+            
+        # ⚠️ st.dataframe အစား CSS အမိန့်နာခံသော st.table ကို အသုံးပြုလိုက်ပါပြီ
+        st.table(formatted_df)
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
         st.write("") 
-        # Title (Subheader) ကို အလယ်ပို့ခြင်း
+        # Title (Subheader) ကို HTML သုံး၍ အလယ်ပို့ခြင်း
         st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used Summary</h3>", unsafe_allow_html=True)
         
         # ကိန်းဂဏန်း Column များကိုသာ စုစုပေါင်းတွက်မည်
@@ -181,18 +173,8 @@ if df is not None:
             
             summary_table = pd.DataFrame(summary_list)
             
-            # စုစုပေါင်းပြသမည့် ဇယားမှ တန်ဖိုးများကို အလယ် (Center) သို့ ပို့ခြင်း
-            summary_align_config = {
-                'Accessories': st.column_config.TextColumn(alignment="center"),
-                'Total Usage': st.column_config.TextColumn(alignment="center")
-            }
-            
-            st.dataframe(
-                summary_table,
-                use_container_width=True,
-                hide_index=True,
-                column_config=summary_align_config
-            )
+            # ⚠️ စုစုပေါင်းဇယားကိုလည်း ခေါင်းစဉ်ရော အချက်အလက်ပါ Center ကျစေရန် st.table ဖြင့် ရေးဆွဲခြင်း
+            st.table(summary_table)
             
     else:
         st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
