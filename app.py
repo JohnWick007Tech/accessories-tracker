@@ -22,7 +22,7 @@ def load_data():
         df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
     return df
 
-# ဒေတာဆွဲယူခြင်းကို သီးသန့် try-except ဖြင့် ဖမ်းယူခြင်း (Syntax Error ကင်းဝေးစေရန်)
+# ဒေတာဆွဲယူခြင်းကို သီးသန့် try-except ဖြင့် ဖမ်းယူခြင်း
 df = None
 try:
     df = load_data()
@@ -31,15 +31,41 @@ except Exception as e:
 
 # ဒေတာ အောင်မြင်စွာ ရရှိမှသာ အောက်ပါ UI ပိုင်းများကို လုပ်ဆောင်မည်
 if df is not None:
+    
+    # 🔍 Google Sheet ထဲတွင် Sleeve / Sleeves Column နာမည်ကို ရှာဖွေခြင်း
+    sleeve_col_in_sheet = None
+    # ဖြစ်နိုင်ခြေရှိသော စာလုံးပေါင်းများကို စစ်ဆေးသည်
+    possible_sleeve_names = [
+        'Sleeves with 2 steels', 
+        'Sleeve with 2 Steels', 
+        'Sleeves with 2 Steels', 
+        'Sleeve with 2 steels'
+    ]
+    
+    for col in df.columns:
+        if col.strip() in possible_sleeve_names:
+            sleeve_col_in_sheet = col
+            break
+            
+    # အကယ်၍ ရှာမတွေ့ပါက Google Sheet ထဲတွင် 'Sleeve' သို့မဟုတ် 'Sleeves' စကားလုံးပါဝင်သော ကော်လံကို ရှာရန်
+    if not sleeve_col_in_sheet:
+        for col in df.columns:
+            if 'sleeve' in col.lower() and '2' in col:
+                sleeve_col_in_sheet = col
+                break
+                
+    # တစ်ခုမှ ရှာမတွေ့သေးပါက default အနေဖြင့် 'Sleeve with 2 Steels' ကို သုံးမည်
+    if not sleeve_col_in_sheet:
+        sleeve_col_in_sheet = 'Sleeve with 2 Steels'
+
     # ၁။ ကော်လံများ စစ်ထုတ်ခြင်းနှင့် ခေါင်းစဉ်များကို အတိုကောက်ပြောင်းလဲခြင်း
-    # (One Core OTB ကို ဖယ်ထုတ်ပြီး Sleeve နေရာတွင် Sleeve with 2 Steels သို့ ပြောင်းလဲထားသည်)
     columns_mapping = {
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
         'TKT/POI/CPE': 'TKT/POI/CPE',                         
         'Patch Cords(SC/APC) 1M': 'Patch Cords (1M)',          
         'Patch Cords(SC/APC) 1.5M': 'Patch Cords (1.5M)',
-        'Sleeve with 2 Steels': 'Sleeve with 2 Steels',
+        sleeve_col_in_sheet: 'Sleeve with 2 Steels', # အလိုအလျောက် ရှာဖွေတွေ့ရှိထားသော ကော်လံနာမည်ကို သုံးမည်
         'Customize (Pencil Kit , white)': 'Customize (Pencil Kit)',
         'Standard (Pencil Kit , white)': 'Standard (Pencil Kit)'
     }
