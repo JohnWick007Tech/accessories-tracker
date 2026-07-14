@@ -99,7 +99,7 @@ try:
                 else:
                     formatted_val = f"{total_val:.1f}"
                     
-                summary_list.append({'ပစ္စည်းအမျိုးအမည်': col, 'စုစုပေါင်းအရေအတွက်': formatted_val})
+                summary_list.append({'Accessories': col, 'Total': formatted_val})
             
             summary_table = pd.DataFrame(summary_list)
             st.table(summary_table)
