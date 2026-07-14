@@ -8,19 +8,25 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 🎨 ဇယားများ၏ ခေါင်းစဉ် (Header Texts) များကိုပါ အလယ် (Center) ရောက်စေရန် CSS ထည့်သွင်းခြင်း
-# streamlit component format သစ်အရ လုံခြုံစိတ်ချစွာ အသုံးပြုနိုင်ပါသည်။
+# 🎨 Streamlit ရဲ့ ဘယ်နှစ်ကြိမ် Refresh ဖြစ်ဖြစ် မပြောင်းလဲတဲ့ Table Attribute များကိုသာ သစ်ကိုင်ပြီး CSS ရေးဆွဲခြင်း
 st.html("""
 <style>
-    /* Table Headers ကို အလယ်ပို့ရန် */
-    th {
+    /* ၁။ ဇယားများ၏ Column Headers (ခေါင်းစဉ်စာသား) အားလုံးကို အလယ်ပို့ခြင်း */
+    [data-testid="stTableHeader"] div {
         text-align: center !important;
+        justify-content: center !important;
+        display: flex !important;
     }
-    div[data-testid="stTableHeader"] {
+    
+    /* ၂။ ဇယားခေါင်းစဉ်အတွင်းရှိ စာသားများကို အလယ်ဗဟိုတည့်တည့် သို့ ပို့ခြင်း */
+    th div {
         text-align: center !important;
+        justify-content: center !important;
+        display: flex !important;
     }
-    /* Dataframe column headers များကို center ညှိရန် */
-    .st-ae, .st-af, .st-ag, .st-ah {
+
+    /* ၃။ ဇယားအတွင်းရှိ Cells တန်ဖိုးအားလုံးကိုပါ Center ဖြစ်စေရန် သေချာအောင် ထိန်းချုပ်ခြင်း */
+    [data-testid="stTable"] td {
         text-align: center !important;
     }
 </style>
