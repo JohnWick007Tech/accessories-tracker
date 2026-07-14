@@ -8,22 +8,22 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 🎨 ဇယားထဲက စာသားများကို လုံးဝအောက်ကြောင်းမဆင်းစေဘဲ (No Wrap) တစ်ကြောင်းတည်း အလယ်တည့်တည့်ကျစေမည့် CSS အသစ်
+# 🎨 ဇယားအတွင်းရှိ Data နှင့် Header စာသားများအားလုံးကို လုံးဝစာကြောင်းမကွဲဘဲ အလယ်တည့်တည့်ကျစေမည့် CSS
 st.html("""
 <style>
-    /* ဇယားခေါင်းစဉ် (Headers) များကို လုံးဝ စာကြောင်းမခွဲဘဲ တစ်ကြောင်းတည်း အလယ်ပို့ရန် */
+    /* ဇယားခေါင်းစဉ် (Headers) များကို လုံးဝ စာကြောင်းမခွဲဘဲ အလယ်ပို့ရန် */
     th, [data-testid="stTableHeader"] div {
         text-align: center !important;
         justify-content: center !important;
         display: flex !important;
-        white-space: nowrap !important; /* စာကြောင်းအောက်မဆင်းစေရန် */
+        white-space: nowrap !important;
         word-break: keep-all !important;
     }
     
     /* ဇယားထဲက ဒေတာ Cell တန်ဖိုးများကိုလည်း တစ်ကြောင်းတည်း အလယ်ပို့ရန် */
     td, [data-testid="styled-cell"] div {
         text-align: center !important;
-        white-space: nowrap !important; /* Date နှင့် Name များ လုံးဝတစ်ကြောင်းတည်းပေါ်စေရန် */
+        white-space: nowrap !important;
         word-break: keep-all !important;
     }
     
@@ -35,8 +35,8 @@ st.html("""
 </style>
 """)
 
-# App Header
-st.title("📱 Engineer Accessories Tracker")
+# App Header (အဓိက ခေါင်းစဉ်ကြီးကိုလည်း HTML သုံး၍ အလယ်ပို့ထားပါသည်)
+st.markdown("<h1 style='text-align: center;'>📱 Engineer Accessories Tracker</h1>", unsafe_allow_html=True)
 
 # ⚠️ သင်၏ Google Sheet CSV Link အမှန်ကို အောက်ကနေရာတွင် ထည့်ပါ
 GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc/gviz/tq?tqx=out:csv"
@@ -83,7 +83,6 @@ if df is not None:
         sleeve_col_in_sheet = 'Sleeve with 2 Steels'
 
     # ၁။ ကော်လံများ စစ်ထုတ်ခြင်းနှင့် ခေါင်းစဉ်များကို အတိုကောက်ပြောင်းလဲခြင်း
-    # (ဖုန်းစခရင်အကျယ်နှင့် ကိုက်ညီစေရန် ခေါင်းစဉ်အတိုများကို သုံးထားပါသည်)
     columns_mapping = {
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
@@ -131,7 +130,8 @@ if df is not None:
 
     # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
     if not result_df.empty:
-        st.subheader("📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား")
+        # ⚠️ Title (Subheader) ကို HTML သုံးပြီး အလယ်တည့်တည့်သို့ အတင်းပို့လိုက်ခြင်းဖြစ်သည်
+        st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား</h3>", unsafe_allow_html=True)
         
         # ကော်လံအလိုက် တန်ဖိုးများနှင့် စာသားများကို အလယ် (Center) ရောက်စေရန်
         custom_align_config = {}
@@ -141,7 +141,7 @@ if df is not None:
             else:
                 custom_align_config[col] = st.column_config.TextColumn(alignment="center")
         
-        # ⚠️ st.dataframe ကို သုံးပြီး layout ကောင်းမွန်အောင် ပြန်လည်ပြသခြင်း
+        # DataFrame ပြသခြင်း
         st.dataframe(
             result_df, 
             use_container_width=True, 
@@ -150,7 +150,9 @@ if df is not None:
         )
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
-        st.subheader("📈 Total Used Summary")
+        st.write("") # ခြားရန်
+        # ⚠️ စုစုပေါင်းဇယားခေါင်းစဉ် "Total Used Summary" ကိုလည်း HTML သုံးပြီး အလယ်တည့်တည့်သို့ အတင်းပို့လိုက်ပါသည်
+        st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used Summary</h3>", unsafe_allow_html=True)
         
         # ကိန်းဂဏန်း Column များကိုသာ စုစုပေါင်းတွက်မည်
         numeric_cols = result_df.select_dtypes(include='number').columns
