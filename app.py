@@ -32,14 +32,14 @@ except Exception as e:
 # ဒေတာ အောင်မြင်စွာ ရရှိမှသာ အောက်ပါ UI ပိုင်းများကို လုပ်ဆောင်မည်
 if df is not None:
     # ၁။ ကော်လံများ စစ်ထုတ်ခြင်းနှင့် ခေါင်းစဉ်များကို အတိုကောက်ပြောင်းလဲခြင်း
+    # (One Core OTB ကို ဖယ်ထုတ်ပြီး Sleeve နေရာတွင် Sleeve with 2 Steels သို့ ပြောင်းလဲထားသည်)
     columns_mapping = {
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
         'TKT/POI/CPE': 'TKT/POI/CPE',                         
         'Patch Cords(SC/APC) 1M': 'Patch Cords (1M)',          
         'Patch Cords(SC/APC) 1.5M': 'Patch Cords (1.5M)',
-        'One Core OTB Box': 'One Core OTB Box',
-        'Sleeve': 'Sleeve',
+        'Sleeve with 2 Steels': 'Sleeve with 2 Steels',
         'Customize (Pencil Kit , white)': 'Customize (Pencil Kit)',
         'Standard (Pencil Kit , white)': 'Standard (Pencil Kit)'
     }
@@ -81,7 +81,7 @@ if df is not None:
 
     # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
     if not result_df.empty:
-        st.subheader("📊 All Engineers Usage Table")
+        st.subheader("📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား")
         
         # စာသားရော၊ ကိန်းဂဏန်းပါ အကုန်လုံးကို အလယ် (Center) ရောက်စေရန် သတ်မှတ်ခြင်း
         custom_align_config = {}
@@ -115,7 +115,7 @@ if df is not None:
                 else:
                     formatted_val = f"{total_val:.1f}"
                     
-                summary_list.append({'Accessories': col, 'Total Usage': formatted_val})
+                summary_list.append({'ပစ္စည်းအမျိုးအမည်': col, 'စုစုပေါင်းအရေအတွက်': formatted_val})
             
             summary_table = pd.DataFrame(summary_list)
             
