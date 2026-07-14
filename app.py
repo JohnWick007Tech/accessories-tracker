@@ -8,7 +8,7 @@ st.set_page_config(page_title="Accessories Tracker", layout="centered")
 st.title("📱 Engineer Accessories Tracker")
 
 # ⚠️ သင်၏ Google Sheet CSV Link အမှန်ကို အောက်ကနေရာတွင် ထည့်ပါ
-GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1abc123XYZ/gviz/tq?tqx=out:csv"
+GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc/gviz/tq?tqx=out:csv"
 
 @st.cache_data(ttl=30) # Data update မြန်စေရန် စက္ကန့် ၃၀ သတ်မှတ်
 def load_data():
