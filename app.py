@@ -1,35 +1,16 @@
 import streamlit as st
 import pandas as pd
 
+# Page Configuration (ဖုန်းအတွက် ပိုမိုသေသပ်သော အခင်းအကျင်း)
 st.set_page_config(page_title="Accessories Tracker", layout="centered")
 
-# CSS သုံးပြီး Layout အားလုံးကို အလယ်ဗဟို (Center) တည့်တည့်သို့ ပို့ခြင်း
-st.markdown("""
-    <style>
-    .stApp h1, .stApp h2, .stApp h3, .stApp p, .stMarkdown {
-        text-align: center !important;
-    }
-    div[data-testid="stWidgetLabel"] {
-        text-align: center !important;
-        width: 100%;
-    }
-    div[data-testid="stTable"] table {
-        margin-left: auto;
-        margin-right: auto;
-        text-align: center !important;
-    }
-    th, td {
-        text-align: center !important;
-    }
-    </style>
-""", unsafe_allowed_html=True)
-
-st.title("📱 Engineer Accessories Tracker")
+# 📱 ခေါင်းစဉ်ကို အလယ်တည့်တည့်သို့ ပို့ခြင်း (Streamlit's Built-in style)
+st.markdown("<h1 style='text-align: center;'>📱 Engineer Accessories Tracker</h1>", unsafe_allowed_html=True)
 
 # ⚠️ သင်၏ Google Sheet CSV Link အမှန်ကို အောက်ပါနေရာတွင် ထည့်ပါ
 GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc/gviz/tq?tqx=out:csv"
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=30) # ဒေတာ update မြန်စေရန် စက္ကန့် ၃၀ သတ်မှတ်
 def load_data():
     df = pd.read_csv(GSHEET_CSV_URL)
     if 'Date' in df.columns:
@@ -39,7 +20,7 @@ def load_data():
 try:
     df = load_data()
     
-    # ပြသချင်သော Column များအား Map လုပ်ခြင်း
+    # ပြသချင်သော Column များအား Map လုပ်ခြင်း (Township & Car-ID ကို ဖယ်ပြီး TKT/POI/CPE ထည့်ထားသည်)
     columns_mapping = {
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
@@ -75,15 +56,15 @@ try:
     st.divider()
 
     if not result_df.empty:
-        st.subheader("📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား")
+        # Table ခေါင်းစဉ်များကို အလယ်တည့်တည့် ပို့ခြင်း
+        st.markdown("<h3 style='text-align: center;'>📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား</h3>", unsafe_allowed_html=True)
         st.dataframe(result_df, use_container_width=True, hide_index=True)
         
-        st.subheader("📈 Total Used Summary")
+        st.markdown("<h3 style='text-align: center;'>📈 Total Used Summary</h3>", unsafe_allowed_html=True)
         numeric_cols = result_df.select_dtypes(include='number').columns
         
         if not numeric_cols.empty:
             summary_list = []
-            # ဒဿမ ရှင်းလင်းရေးအတွက် for-loop အား စနစ်တကျ ရေးသားခြင်း
             for col in numeric_cols:
                 total_val = result_df[col].sum()
                 if total_val % 1 == 0:
