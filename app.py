@@ -8,22 +8,29 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 🎨 ဇယားအားလုံး၏ Header နှင့် Data Cells အားလုံးကို ၁၀၀% အလယ်ဗဟို (Center) သို့ ပို့ပေးသည့် CSS Rule အသစ်
+# 🎨 ဇယားထဲက စာသားများကို လုံးဝအောက်ကြောင်းမဆင်းစေဘဲ (No Wrap) တစ်ကြောင်းတည်း အလယ်တည့်တည့်ကျစေမည့် CSS အသစ်
 st.html("""
 <style>
-    /* Table တစ်ခုလုံးရှိ ခေါင်းစဉ် (Headers) များနှင့် ဒေတာ (Data Cells) အားလုံးကို Center ပို့ခြင်း */
-    div[data-testid="stTable"] table {
-        width: 100% !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-    }
-    div[data-testid="stTable"] th {
+    /* ဇယားခေါင်းစဉ် (Headers) များကို လုံးဝ စာကြောင်းမခွဲဘဲ တစ်ကြောင်းတည်း အလယ်ပို့ရန် */
+    th, [data-testid="stTableHeader"] div {
         text-align: center !important;
-        vertical-align: middle !important;
+        justify-content: center !important;
+        display: flex !important;
+        white-space: nowrap !important; /* စာကြောင်းအောက်မဆင်းစေရန် */
+        word-break: keep-all !important;
     }
+    
+    /* ဇယားထဲက ဒေတာ Cell တန်ဖိုးများကိုလည်း တစ်ကြောင်းတည်း အလယ်ပို့ရန် */
+    td, [data-testid="styled-cell"] div {
+        text-align: center !important;
+        white-space: nowrap !important; /* Date နှင့် Name များ လုံးဝတစ်ကြောင်းတည်းပေါ်စေရန် */
+        word-break: keep-all !important;
+    }
+    
+    /* စုစုပေါင်းဇယားကွက် သပ်ရပ်စေရန် */
     div[data-testid="stTable"] td {
         text-align: center !important;
-        vertical-align: middle !important;
+        white-space: nowrap !important;
     }
 </style>
 """)
@@ -76,6 +83,7 @@ if df is not None:
         sleeve_col_in_sheet = 'Sleeve with 2 Steels'
 
     # ၁။ ကော်လံများ စစ်ထုတ်ခြင်းနှင့် ခေါင်းစဉ်များကို အတိုကောက်ပြောင်းလဲခြင်း
+    # (ဖုန်းစခရင်အကျယ်နှင့် ကိုက်ညီစေရန် ခေါင်းစဉ်အတိုများကို သုံးထားပါသည်)
     columns_mapping = {
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
@@ -125,13 +133,21 @@ if df is not None:
     if not result_df.empty:
         st.subheader("📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား")
         
-        # ကိန်းဂဏန်းဒေတာများကို integer ဖြစ်လျှင် ဒဿမဖြုတ်ရန် format ပြုလုပ်ခြင်း
-        formatted_df = result_df.copy()
-        for col in formatted_df.select_dtypes(include='number').columns:
-            formatted_df[col] = formatted_df[col].apply(lambda x: f"{int(x)}" if x % 1 == 0 else f"{x:.1f}")
-            
-        # ⚠️ st.dataframe အစား CSS အမိန့်နာခံသော st.table ကို သုံးလိုက်ခြင်းဖြင့် ခေါင်းစဉ်များပါ Center ကျသွားမည်
-        st.table(formatted_df)
+        # ကော်လံအလိုက် တန်ဖိုးများနှင့် စာသားများကို အလယ် (Center) ရောက်စေရန်
+        custom_align_config = {}
+        for col in result_df.columns:
+            if pd.api.types.is_numeric_dtype(result_df[col]):
+                custom_align_config[col] = st.column_config.NumberColumn(alignment="center")
+            else:
+                custom_align_config[col] = st.column_config.TextColumn(alignment="center")
+        
+        # ⚠️ st.dataframe ကို သုံးပြီး layout ကောင်းမွန်အောင် ပြန်လည်ပြသခြင်း
+        st.dataframe(
+            result_df, 
+            use_container_width=True, 
+            hide_index=True,
+            column_config=custom_align_config
+        )
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
         st.subheader("📈 Total Used Summary")
@@ -154,8 +170,18 @@ if df is not None:
             
             summary_table = pd.DataFrame(summary_list)
             
-            # ⚠️ စုစုပေါင်းဇယားကိုလည်း ခေါင်းစဉ်ရော အချက်အလက်ပါ Center ကျစေရန် st.table ဖြင့် ရေးဆွဲခြင်း
-            st.table(summary_table)
+            # စုစုပေါင်းပြသမည့် ဇယားမှ တန်ဖိုးများကို အလယ် (Center) သို့ ပို့ခြင်း
+            summary_align_config = {
+                'Accessories': st.column_config.TextColumn(alignment="center"),
+                'Total Usage': st.column_config.TextColumn(alignment="center")
+            }
+            
+            st.dataframe(
+                summary_table,
+                use_container_width=True,
+                hide_index=True,
+                column_config=summary_align_config
+            )
             
     else:
         st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
