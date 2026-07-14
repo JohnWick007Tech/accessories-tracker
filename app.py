@@ -8,7 +8,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# App Header 
+# App Header
 st.title("📱 Engineer Accessories Tracker")
 
 # ⚠️ သင်၏ Google Sheet CSV Link အမှန်ကို အောက်ကနေရာတွင် ထည့်ပါ
@@ -17,15 +17,20 @@ GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1q5sRUfodaYiW-mVytfpa0O
 @st.cache_data(ttl=30) # Data update မြန်စေရန် စက္ကန့် ၃၀ သတ်မှတ်
 def load_data():
     df = pd.read_csv(GSHEET_CSV_URL)
-    
     # Date Column ကို စာသားမှ နေ့စွဲ Format သို့ ပြောင်းလဲခြင်း
     if 'Date' in df.columns:
         df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
     return df
 
+# ဒေတာဆွဲယူခြင်းကို သီးသန့် try-except ဖြင့် ဖမ်းယူခြင်း (Syntax Error ကင်းဝေးစေရန်)
+df = None
 try:
     df = load_data()
-    
+except Exception as e:
+    st.error(f"❌ ချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
+
+# ဒေတာ အောင်မြင်စွာ ရရှိမှသာ အောက်ပါ UI ပိုင်းများကို လုပ်ဆောင်မည်
+if df is not None:
     # ၁။ ကော်လံများ စစ်ထုတ်ခြင်းနှင့် ခေါင်းစဉ်များကို အတိုကောက်ပြောင်းလဲခြင်း
     columns_mapping = {
         'Date': 'Date',
@@ -68,3 +73,64 @@ try:
     
     if selected_engineer != "All Engineers":
         result_df = result_df[result_df['Engineer Name'] == selected_engineer]
+        
+    if selected_date != "All Dates":
+        result_df = result_df[result_df['Date'] == selected_date]
+
+    st.divider()
+
+    # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
+    if not result_df.empty:
+        st.subheader("📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား")
+        
+        # စာသားရော၊ ကိန်းဂဏန်းပါ အကုန်လုံးကို အလယ် (Center) ရောက်စေရန် သတ်မှတ်ခြင်း
+        custom_align_config = {}
+        for col in result_df.columns:
+            if pd.api.types.is_numeric_dtype(result_df[col]):
+                custom_align_config[col] = st.column_config.NumberColumn(alignment="center")
+            else:
+                custom_align_config[col] = st.column_config.TextColumn(alignment="center")
+        
+        st.dataframe(
+            result_df, 
+            use_container_width=True, 
+            hide_index=True,
+            column_config=custom_align_config
+        )
+        
+        # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း (ဒဿမ ရှင်းလင်းရေး အပါအဝင်)
+        st.subheader("📈 Total Used Summary")
+        
+        # ကိန်းဂဏန်း Column များကိုသာ စုစုပေါင်းတွက်မည်
+        numeric_cols = result_df.select_dtypes(include='number').columns
+        
+        if not numeric_cols.empty:
+            summary_list = []
+            for col in numeric_cols:
+                total_val = result_df[col].sum()
+                
+                # ဒဿမနောက်က 0 ဖြစ်နေလျှင် ကိန်းပြည့်ပဲပြရန်၊ မဟုတ်လျှင် ဒဿမ ၁ နေရာပဲပြရန်
+                if total_val % 1 == 0:
+                    formatted_val = f"{int(total_val)}"
+                else:
+                    formatted_val = f"{total_val:.1f}"
+                    
+                summary_list.append({'ပစ္စည်းအမျိုးအမည်': col, 'စုစုပေါင်းအရေအတွက်': formatted_val})
+            
+            summary_table = pd.DataFrame(summary_list)
+            
+            # စုစုပေါင်းပြသမည့် ဇယားမှ ကော်လံနှစ်ခုစလုံးကိုလည်း အလယ်ဗဟို (Center) သို့ ပို့ခြင်း
+            summary_align_config = {
+                'ပစ္စည်းအမျိုးအမည်': st.column_config.TextColumn(alignment="center"),
+                'စုစုပေါင်းအရေအတွက်': st.column_config.TextColumn(alignment="center")
+            }
+            
+            st.dataframe(
+                summary_table,
+                use_container_width=True,
+                hide_index=True,
+                column_config=summary_align_config
+            )
+            
+    else:
+        st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
