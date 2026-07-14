@@ -70,12 +70,11 @@ def load_usage_data():
 @st.cache_data(ttl=5)
 def load_out_data():
     try:
-        # 🔹 ပထမဆုံး row က ဗလာ သို့မဟုတ် စာသားဖြစ်နေသဖြင့် skiprows=1 ဖြင့် Row 2 မှ ခေါင်းစဉ်ကို စဖတ်ခိုင်းပါသည်
+        # Row 2 ကို Header အဖြစ် ယူရန် skiprows=1 သုံးပြီး ဖတ်သည်
         df_out = pd.read_csv(OUT_CSV_URL, skiprows=1)
-        
-        # ကော်လံအမည်များ နေရာတကျဖြစ်စေရန် strip လုပ်ခြင်း
         df_out.columns = df_out.columns.str.strip()
         
+        # Date ကော်လံကို အားကောင်းကောင်းဖြင့် parse လုပ်ပြီး standard စာသားပြောင်းလဲခြင်း
         if 'Date' in df_out.columns:
             df_out['Date'] = pd.to_datetime(df_out['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
         return df_out
@@ -172,7 +171,7 @@ if df is not None:
         if not numeric_cols.empty:
             summary_list = []
             
-            # Product Name Mapping Dictionaries (စာလုံးသေးပြောင်းပြီး ညှိပါမည်)
+            # ဒေါင်းလုဒ်လုပ်ထားသော ဖိုင်ထဲမှ စာသားအစစ်အမှန်များနှင့် Mapping လုပ်ခြင်း
             product_name_mapping = {
                 'sc-apc,sm,sx 3.0mm (1m)': 'patch cords (1m)',
                 'patch cords(sc/apc) 1m': 'patch cords (1m)',
@@ -197,22 +196,23 @@ if df is not None:
                 if df_out is not None and 'Product Name' in df_out.columns and 'Out' in df_out.columns:
                     temp_out_df = df_out.copy()
                     
-                    # ဒေတာသန့်စင်ခြင်း
+                    # စာသားများ သန့်စင်ခြင်း
                     temp_out_df['Clean_Product'] = temp_out_df['Product Name'].astype(str).str.strip().str.lower()
                     temp_out_df['Mapped_Product'] = temp_out_df['Clean_Product'].map(product_name_mapping)
                     
                     target_col_lower = col.strip().lower()
                     item_out_df = temp_out_df[temp_out_df['Mapped_Product'] == target_col_lower]
                     
-                    # 🔹 Selected Engineer အလိုက် အတိအကျ စစ်ထုတ်ခြင်း
+                    # 🔹 Dropdown က ရွေးချယ်ထားသော Engineer အလိုက် စစ်ထုတ်ခြင်း
                     if selected_engineer != "All Engineers" and 'Eng Name' in item_out_df.columns:
-                        item_out_df = item_out_df[item_out_df['Eng Name'].astype(str).str.strip() == selected_engineer]
+                        # စာသားချင်း ညှိနှိုင်းမှု ကွက်တိဖြစ်စေရန် strip() နှင့် lower() သုံးပါသည်
+                        item_out_df = item_out_df[item_out_df['Eng Name'].astype(str).str.strip().str.lower() == selected_engineer.strip().lower()]
                         
-                    # 🔹 Selected Date အလိုက် အတိအကျ စစ်ထုတ်ခြင်း
+                    # 🔹 Dropdown က ရွေးချယ်ထားသော Date အလိုက် စစ်ထုတ်ခြင်း
                     if selected_date != "All Dates" and 'Date' in item_out_df.columns:
                         item_out_df = item_out_df[item_out_df['Date'] == selected_date]
                         
-                    # 'Out' ကော်လံမှ တန်ဖိုးများကို ပေါင်းယူခြင်း
+                    # 'Out' အရေအတွက်ကို ပေါင်းယူခြင်း
                     total_out_val = pd.to_numeric(item_out_df['Out'], errors='coerce').sum()
                 
                 # 🎯 ဂ။ Return to PM = Out (Store ထဲကထုတ်တာ) - Total Usage (တကယ်သုံးတာ)
