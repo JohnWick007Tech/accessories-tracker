@@ -107,7 +107,7 @@ if df is not None:
 
     # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
     if not result_df.empty:
-        st.subheader("📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား")
+        st.subheader("📊 Engineers Usage Table")
         
         # စာသားရော၊ ကိန်းဂဏန်းပါ အကုန်လုံးကို အလယ် (Center) ရောက်စေရန် သတ်မှတ်ခြင်း
         custom_align_config = {}
@@ -141,14 +141,14 @@ if df is not None:
                 else:
                     formatted_val = f"{total_val:.1f}"
                     
-                summary_list.append({'ပစ္စည်းအမျိုးအမည်': col, 'စုစုပေါင်းအရေအတွက်': formatted_val})
+                summary_list.append({'Accessories': col, 'Total Usage': formatted_val})
             
             summary_table = pd.DataFrame(summary_list)
             
             # စုစုပေါင်းပြသမည့် ဇယားမှ ကော်လံနှစ်ခုစလုံးကိုလည်း အလယ်ဗဟို (Center) သို့ ပို့ခြင်း
             summary_align_config = {
-                'ပစ္စည်းအမျိုးအမည်': st.column_config.TextColumn(alignment="center"),
-                'စုစုပေါင်းအရေအတွက်': st.column_config.TextColumn(alignment="center")
+                'Accessories': st.column_config.TextColumn(alignment="center"),
+                'Total Usage': st.column_config.TextColumn(alignment="center")
             }
             
             st.dataframe(
