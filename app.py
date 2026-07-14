@@ -8,26 +8,22 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 🎨 Streamlit ရဲ့ ဘယ်နှစ်ကြိမ် Refresh ဖြစ်ဖြစ် မပြောင်းလဲတဲ့ Table Attribute များကိုသာ သစ်ကိုင်ပြီး CSS ရေးဆွဲခြင်း
+# 🎨 ဇယားအားလုံး၏ Header နှင့် Data Cells အားလုံးကို ၁၀၀% အလယ်ဗဟို (Center) သို့ ပို့ပေးသည့် CSS Rule အသစ်
 st.html("""
 <style>
-    /* ၁။ ဇယားများ၏ Column Headers (ခေါင်းစဉ်စာသား) အားလုံးကို အလယ်ပို့ခြင်း */
-    [data-testid="stTableHeader"] div {
-        text-align: center !important;
-        justify-content: center !important;
-        display: flex !important;
+    /* Table တစ်ခုလုံးရှိ ခေါင်းစဉ် (Headers) များနှင့် ဒေတာ (Data Cells) အားလုံးကို Center ပို့ခြင်း */
+    div[data-testid="stTable"] table {
+        width: 100% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
-    
-    /* ၂။ ဇယားခေါင်းစဉ်အတွင်းရှိ စာသားများကို အလယ်ဗဟိုတည့်တည့် သို့ ပို့ခြင်း */
-    th div {
+    div[data-testid="stTable"] th {
         text-align: center !important;
-        justify-content: center !important;
-        display: flex !important;
+        vertical-align: middle !important;
     }
-
-    /* ၃။ ဇယားအတွင်းရှိ Cells တန်ဖိုးအားလုံးကိုပါ Center ဖြစ်စေရန် သေချာအောင် ထိန်းချုပ်ခြင်း */
-    [data-testid="stTable"] td {
+    div[data-testid="stTable"] td {
         text-align: center !important;
+        vertical-align: middle !important;
     }
 </style>
 """)
@@ -129,20 +125,13 @@ if df is not None:
     if not result_df.empty:
         st.subheader("📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား")
         
-        # ကော်လံအောက်က တန်ဖိုးများကို အလယ် (Center) ရောက်စေရန်
-        custom_align_config = {}
-        for col in result_df.columns:
-            if pd.api.types.is_numeric_dtype(result_df[col]):
-                custom_align_config[col] = st.column_config.NumberColumn(alignment="center")
-            else:
-                custom_align_config[col] = st.column_config.TextColumn(alignment="center")
-        
-        st.dataframe(
-            result_df, 
-            use_container_width=True, 
-            hide_index=True,
-            column_config=custom_align_config
-        )
+        # ကိန်းဂဏန်းဒေတာများကို integer ဖြစ်လျှင် ဒဿမဖြုတ်ရန် format ပြုလုပ်ခြင်း
+        formatted_df = result_df.copy()
+        for col in formatted_df.select_dtypes(include='number').columns:
+            formatted_df[col] = formatted_df[col].apply(lambda x: f"{int(x)}" if x % 1 == 0 else f"{x:.1f}")
+            
+        # ⚠️ st.dataframe အစား CSS အမိန့်နာခံသော st.table ကို သုံးလိုက်ခြင်းဖြင့် ခေါင်းစဉ်များပါ Center ကျသွားမည်
+        st.table(formatted_df)
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
         st.subheader("📈 Total Used Summary")
@@ -165,18 +154,8 @@ if df is not None:
             
             summary_table = pd.DataFrame(summary_list)
             
-            # စုစုပေါင်းပြသမည့် ဇယားမှ တန်ဖိုးများကို အလယ် (Center) သို့ ပို့ခြင်း
-            summary_align_config = {
-                'Accessories': st.column_config.TextColumn(alignment="center"),
-                'Total Usage': st.column_config.TextColumn(alignment="center")
-            }
-            
-            st.dataframe(
-                summary_table,
-                use_container_width=True,
-                hide_index=True,
-                column_config=summary_align_config
-            )
+            # ⚠️ စုစုပေါင်းဇယားကိုလည်း ခေါင်းစဉ်ရော အချက်အလက်ပါ Center ကျစေရန် st.table ဖြင့် ရေးဆွဲခြင်း
+            st.table(summary_table)
             
     else:
         st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
