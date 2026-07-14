@@ -60,21 +60,30 @@ OUT_TAB_NAME = "Out Of PM"
 USAGE_CSV_URL = f"{GSHEET_BASE_URL}/gviz/tq?tqx=out:csv&sheet={USAGE_TAB_NAME}"
 OUT_CSV_URL = f"{GSHEET_BASE_URL}/gviz/tq?tqx=out:csv&sheet={OUT_TAB_NAME}"
 
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=5)
 def load_usage_data():
     df = pd.read_csv(USAGE_CSV_URL)
     if 'Date' in df.columns:
-        # Date ပုံစံအားလုံးကို ပျော့ပျောင်းစွာ ကောက်ယူခြင်း
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
     return df
 
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=5)
 def load_out_data():
     try:
         df_out = pd.read_csv(OUT_CSV_URL)
-        if 'Date' in df_out.columns:
-            # 14-Jul-26 ကဲ့သို့သော text format သို့မဟုတ် standard format အားလုံးကို automatic parse လုပ်ခြင်း
-            df_out['Date'] = pd.to_datetime(df_out['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
+        
+        # 🔹 Column Position (Index) အလိုက် ကော်လံများကို နာမည်အတိအကျ ပြန်ပေးခြင်း
+        # Column A -> Index 0, Column C -> Index 2, Column E -> Index 4, Column G -> Index 6
+        rename_dict = {}
+        if len(df_out.columns) > 0: rename_dict[df_out.columns[0]] = 'Out_Date'       # Column A
+        if len(df_out.columns) > 2: rename_dict[df_out.columns[2]] = 'Out_EngName'    # Column C
+        if len(df_out.columns) > 4: rename_dict[df_out.columns[4]] = 'Out_Product'    # Column E
+        if len(df_out.columns) > 6: rename_dict[df_out.columns[6]] = 'Out_Qty'        # Column G
+        
+        df_out = df_out.rename(columns=rename_dict)
+        
+        if 'Out_Date' in df_out.columns:
+            df_out['Out_Date'] = pd.to_datetime(df_out['Out_Date'], errors='coerce').dt.strftime('%Y-%m-%d')
         return df_out
     except Exception as e:
         return None
@@ -90,7 +99,7 @@ except Exception as e:
 
 if df is not None:
     
-    # 🔍 Sleeve Column နာမည်ရှာဖွေခြင်း logic
+    # Sleeve Column ရှာဖွေခြင်း logic
     sleeve_col_in_sheet = None
     possible_sleeve_names = ['Sleeves with 2 steels', 'Sleeve with 2 Steels', 'Sleeves with 2 Steels', 'Sleeve with 2 steels']
     
@@ -98,13 +107,11 @@ if df is not None:
         if col.strip() in possible_sleeve_names:
             sleeve_col_in_sheet = col
             break
-            
     if not sleeve_col_in_sheet:
         for col in df.columns:
             if 'sleeve' in col.lower() and '2' in col:
                 sleeve_col_in_sheet = col
                 break
-                
     if not sleeve_col_in_sheet:
         sleeve_col_in_sheet = 'Sleeve with 2 Steels'
 
@@ -141,7 +148,7 @@ if df is not None:
             options=["All Dates"] + list(dates_list)
         )
 
-    # ၃။ Filter Logic
+    # ၃။ Filter Logic (မူရင်း ဇယား)
     result_df = filtered_df.copy()
     
     if selected_engineer != "All Engineers":
@@ -171,8 +178,7 @@ if df is not None:
         if not numeric_cols.empty:
             summary_list = []
             
-            # မူရင်း Table ကော်လံနာမည်များကို Out Of PM Tab ထဲက Product Name စာသားများနှင့် တိုက်ရိုက်ချိတ်ဆက်ရန် အားကောင်းသော mapping
-            # (စာလုံးကြီး/သေး နှင့် space အားလုံးကို lower().strip() ဖြင့် ကိုင်တွယ်ပါမည်)
+            # Product Name Mapping Dictionaries (စာလုံးသေးပြောင်းပြီး ညှိပါမည်)
             product_name_mapping = {
                 'sc-apc,sm,sx 3.0mm (1m)': 'patch cords (1m)',
                 'patch cords(sc/apc) 1m': 'patch cords (1m)',
@@ -194,28 +200,26 @@ if df is not None:
                 
                 # ခ။ Out Of PM ထဲက 'Out' ရှာဖွေခြင်း logic
                 total_out_val = 0
-                if df_out is not None and 'Product Name' in df_out.columns and 'Out' in df_out.columns:
+                if df_out is not None and 'Out_Product' in df_out.columns and 'Out_Qty' in df_out.columns:
                     temp_out_df = df_out.copy()
                     
                     # ဒေတာသန့်စင်ခြင်း
-                    temp_out_df['Clean_Product'] = temp_out_df['Product Name'].astype(str).str.strip().str.lower()
+                    temp_out_df['Clean_Product'] = temp_out_df['Out_Product'].astype(str).str.strip().str.lower()
                     temp_out_df['Mapped_Product'] = temp_out_df['Clean_Product'].map(product_name_mapping)
                     
-                    # သက်ဆိုင်ရာ Accessories အလိုက် စစ်ထုတ်ခြင်း
                     target_col_lower = col.strip().lower()
                     item_out_df = temp_out_df[temp_out_df['Mapped_Product'] == target_col_lower]
                     
-                    # Engineer Name Filter စစ်ခြင်း (စာသားပါဝင်မှုကို သေချာစစ်ဆေးသည်)
-                    if selected_engineer != "All Engineers" and 'Eng Name' in item_out_df.columns:
+                    # Engineer Filter စစ်ခြင်း
+                    if selected_engineer != "All Engineers" and 'Out_EngName' in item_out_df.columns:
                         clean_eng_name = selected_engineer.split('-')[0].strip().lower()
-                        item_out_df = item_out_df[item_out_df['Eng Name'].astype(str).str.lower().str.contains(clean_eng_name, na=False)]
+                        item_out_df = item_out_df[item_out_df['Out_EngName'].astype(str).str.lower().str.contains(clean_eng_name, na=False)]
                         
                     # Date Filter စစ်ခြင်း
-                    if selected_date != "All Dates" and 'Date' in item_out_df.columns:
-                        item_out_df = item_out_df[item_out_df['Date'] == selected_date]
+                    if selected_date != "All Dates" and 'Out_Date' in item_out_df.columns:
+                        item_out_df = item_out_df[item_out_df['Out_Date'] == selected_date]
                         
-                    # Out ကော်လံမှ တန်ဖိုးများကို ပေါင်းယူခြင်း
-                    total_out_val = pd.to_numeric(item_out_df['Out'], errors='coerce').sum()
+                    total_out_val = pd.to_numeric(item_out_df['Out_Qty'], errors='coerce').sum()
                 
                 # ဂ။ Return to PM = Out - Total Usage
                 return_to_pm_val = total_out_val - total_usage_val
