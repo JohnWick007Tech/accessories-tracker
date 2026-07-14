@@ -4,33 +4,8 @@ import pandas as pd
 # Page Configuration (ဖုန်းအတွက် ပိုမိုသေသပ်သော အခင်းအကျင်း)
 st.set_page_config(page_title="Accessories Tracker", layout="centered")
 
-# CSS သုံးပြီး စာသားများ၊ ခေါင်းစဉ်များနှင့် ဇယားများကို စခရင်၏ အလယ်ဗဟို (Center) တည့်တည့်သို့ ပို့ခြင်း
-st.markdown("""
-    <style>
-    /* ခေါင်းစဉ်များနှင့် စာသားများကို အလယ်ပို့ရန် */
-    .stApp h1, .stApp h2, .stApp h3, .stApp p, .stMarkdown {
-        text-align: center !important;
-    }
-    
-    /* Dropdown ခေါင်းစဉ်များကို အလယ်ပို့ရန် */
-    div[data-testid="stWidgetLabel"] {
-        text-align: center !important;
-        width: 100%;
-    }
-    
-    /* Summary Table နှင့် အခြား Element များကို အလယ်ပို့ရန် */
-    div[data-testid="stTable"] table {
-        margin-left: auto;
-        margin-right: auto;
-        text-align: center !important;
-    }
-    th, td {
-        text-align: center !important;
-    }
-    </style>
-""", unsafe_allowed_html=True)
-
-st.title("📱 Engineer Accessories Tracker")
+# CSS style များကို သုံးမည့်အစား Streamlit ရဲ့ built-in markdown ဖြင့် ခေါင်းစဉ်ကို အလယ်ပို့ခြင်း
+st.markdown("<h1 style='text-align: center;'>📱 Engineer Accessories Tracker</h1>", unsafe_allowed_html=True)
 
 # ⚠️ သင်၏ Google Sheet CSV Link အမှန်ကို အောက်ကနေရာတွင် ထည့်ပါ
 GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1abc123XYZ/gviz/tq?tqx=out:csv"
@@ -51,8 +26,8 @@ try:
     columns_mapping = {
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
-        'TKT/POI/CPE': 'TKT/POI/CPE',                         # မူရင်း ကော်လံအသစ်
-        'Patch Cords(SC/APC) 1M': 'Patch Cords\n(1M)',          # Title ကို ၂ ဆင့်ခွဲရန်
+        'TKT/POI/CPE': 'TKT/POI/CPE',                         
+        'Patch Cords(SC/APC) 1M': 'Patch Cords\n(1M)',          
         'Patch Cords(SC/APC) 1.5M': 'Patch Cords\n(1.5M)',
         'One Core OTB Box': 'One Core\nOTB Box',
         'Sleeve': 'Sleeve',
@@ -98,9 +73,8 @@ try:
 
     # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
     if not result_df.empty:
-        st.subheader("📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား")
+        st.markdown("<h3 style='text-align: center;'>📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား</h3>", unsafe_allowed_html=True)
         
-        # ဖုန်းမျက်နှာပြင်တွင် စာသားများ အလယ်ကွက်တိဖြစ်ပြီး ကျဉ်းကျဉ်းလင်းလင်း ဖြစ်စေရန် စတိုင်သွင်းခြင်း
         st.dataframe(
             result_df, 
             use_container_width=True, 
@@ -108,7 +82,7 @@ try:
         )
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း (ဒဿမ ရှင်းလင်းရေး အပါအဝင်)
-        st.subheader("📈 Total Used Summary")
+        st.markdown("<h3 style='text-align: center;'>📈 Total Used Summary</h3>", unsafe_allowed_html=True)
         
         # ကိန်းဂဏန်း Column များကိုသာ စုစုပေါင်းတွက်မည်
         numeric_cols = result_df.select_dtypes(include='number').columns
@@ -128,7 +102,7 @@ try:
             
             summary_table = pd.DataFrame(summary_list)
             
-            # စုစုပေါင်းပြသမည့် ဇယားကိုလည်း အလယ်တည့်တည့်ကျအောင် st.dataframe သုံးပြီး ပြသခြင်း
+            # စုစုပေါင်းပြသမည့် ဇယားကို st.dataframe ဖြင့် အဆင်ပြေစွာပြသခြင်း
             st.dataframe(
                 summary_table,
                 use_container_width=True,
