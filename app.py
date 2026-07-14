@@ -72,8 +72,9 @@ def load_out_data():
     try:
         df_out = pd.read_csv(OUT_CSV_URL)
         if 'Date' in df_out.columns:
-            # 🔹 14-Jul-26 ကဲ့သို့သော format မျိုးကိုပါ တိကျစွာ format ပြောင်းနိုင်ရန် format='mixed' အသုံးပြုခြင်း
-            df_out['Date'] = pd.to_datetime(df_out['Date'], format='mixed', errors='coerce').dt.strftime('%Y-%m-%d')
+            # 🔹 14-Jul-26 ကဲ့သို့သော စာသား format ကို တိကျမှန်ကန်စွာ ကောက်ယူနိုင်ရန် explicit format ဖြင့် ပြောင်းလဲခြင်း
+            # %d-%b-%y သည် ရက်စွဲ-လအတိုကောက်-နှစ်အကျဉ်း (ဥပမာ 14-Jul-26 -> 2026-07-14) ကို ကွက်တိရစေပါသည်
+            df_out['Date'] = pd.to_datetime(df_out['Date'], format='%d-%b-%y', errors='coerce').dt.strftime('%Y-%m-%d')
         return df_out
     except Exception as e:
         return None
@@ -85,7 +86,7 @@ try:
     df = load_usage_data()
     df_out = load_out_data()
 except Exception as e:
-    st.error(f"❌ ချიტဆက်မှု အဆင်မပြေပါ- {e}")
+    st.error(f"❌ ချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
 
 if df is not None:
     
@@ -140,7 +141,7 @@ if df is not None:
             options=["All Dates"] + list(dates_list)
         )
 
-    # ၃။ Filter Logic
+    # ၃။ Filter Logic (မူရင်း ဇယားတွက်ရန်)
     result_df = filtered_df.copy()
     
     if selected_engineer != "All Engineers":
@@ -161,7 +162,7 @@ if df is not None:
             
         st.table(formatted_df)
         
-        # ၅။ Summary
+        # ၅။ Summary အပိုင်းတွက်ချက်ခြင်း
         st.write("") 
         st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used Summary</h3>", unsafe_allow_html=True)
         
@@ -170,6 +171,7 @@ if df is not None:
         if not numeric_cols.empty:
             summary_list = []
             
+            # Product Name Mapping Dictionaries
             product_name_mapping = {
                 'SC-APC,SM,SX 3.0MM (1M)': 'Patch Cords (1M)',
                 'Sleeves with 2 steels': 'Sleeve with 2 Steels',
@@ -183,31 +185,33 @@ if df is not None:
                 # က။ မူရင်း သုံးစွဲမှု စုစုပေါင်း (Total Usage)
                 total_usage_val = result_df[col].sum()
                 
-                # ခ။ Out Of PM ထဲက 'Out' ရှာဖွေခြင်း
+                # ခ။ Out Of PM ထဲက 'Out' ရှာဖွေခြင်း logic
                 total_out_val = 0
                 if df_out is not None and 'Product Name' in df_out.columns and 'Out' in df_out.columns:
                     temp_out_df = df_out.copy()
                     
-                    # နေရာလွတ်များဖယ်ပြီး mapping လုပ်ခြင်း
+                    # နေရာလွတ်များဖယ်ပြီး mapping ညှိခြင်း
                     temp_out_df['Mapped_Product'] = temp_out_df['Product Name'].astype(str).str.strip().map(product_name_mapping).fillna(temp_out_df['Product Name'].astype(str).str.strip())
                     
                     item_out_df = temp_out_df[temp_out_df['Mapped_Product'].str.lower() == col.strip().lower()]
                     
-                    # Engineer Filter ချိန်ညှိခြင်း (Dropdown နာမည်အတိုင်း အတိအကျ သို့မဟုတ် တူညီမှုအလိုက် စစ်ထုတ်ခြင်း)
+                    # Engineer Filter စစ်ဆေးခြင်း
                     if selected_engineer != "All Engineers" and 'Eng Name' in item_out_df.columns:
-                        # 🔹 နာမည်အတိုင်း တိုက်ရိုက် သို့မဟုတ် contains နှစ်မျိုးလုံးဖြင့် စစ်ထုတ်ပေးထားပါသည်
+                        # နာမည် အတိအကျတူညီမှု သို့မဟုတ် ID မတူညီပါက Substring ပါဝင်မှုဖြင့် filter လုပ်သည်
+                        clean_eng_name = selected_engineer.split('-')[0].strip()
                         item_out_df = item_out_df[
                             (item_out_df['Eng Name'].astype(str).str.strip() == selected_engineer) | 
-                            (item_out_df['Eng Name'].astype(str).str.contains(selected_engineer.split('-')[0].strip(), case=False, na=False))
+                            (item_out_df['Eng Name'].astype(str).str.contains(clean_eng_name, case=False, na=False))
                         ]
                         
-                    # Date Filter ချိန်ညှိခြင်း
+                    # Date Filter စစ်ဆေးခြင်း
                     if selected_date != "All Dates" and 'Date' in item_out_df.columns:
                         item_out_df = item_out_df[item_out_df['Date'] == selected_date]
                         
+                    # Out တန်ဖိုးများကို ပေါင်းယူခြင်း
                     total_out_val = pd.to_numeric(item_out_df['Out'], errors='coerce').sum()
                 
-                # ဂ။ Return to PM = Out - Total Usage ✅
+                # ဂ။ Return to PM = Out - Total Usage တွက်ချက်ခြင်း
                 return_to_pm_val = total_out_val - total_usage_val
                 
                 def format_num(val):
