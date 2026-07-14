@@ -8,7 +8,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 🎨 CSS
+# 🎨 Table Formatting CSS
 st.html("""
 <style>
     div[data-testid="stTable"] {
@@ -60,21 +60,21 @@ OUT_TAB_NAME = "Out Of PM"
 USAGE_CSV_URL = f"{GSHEET_BASE_URL}/gviz/tq?tqx=out:csv&sheet={USAGE_TAB_NAME}"
 OUT_CSV_URL = f"{GSHEET_BASE_URL}/gviz/tq?tqx=out:csv&sheet={OUT_TAB_NAME}"
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=10)
 def load_usage_data():
     df = pd.read_csv(USAGE_CSV_URL)
     if 'Date' in df.columns:
+        # Date ပုံစံအားလုံးကို ပျော့ပျောင်းစွာ ကောက်ယူခြင်း
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
     return df
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=10)
 def load_out_data():
     try:
         df_out = pd.read_csv(OUT_CSV_URL)
         if 'Date' in df_out.columns:
-            # 🔹 14-Jul-26 ကဲ့သို့သော စာသား format ကို တိကျမှန်ကန်စွာ ကောက်ယူနိုင်ရန် explicit format ဖြင့် ပြောင်းလဲခြင်း
-            # %d-%b-%y သည် ရက်စွဲ-လအတိုကောက်-နှစ်အကျဉ်း (ဥပမာ 14-Jul-26 -> 2026-07-14) ကို ကွက်တိရစေပါသည်
-            df_out['Date'] = pd.to_datetime(df_out['Date'], format='%d-%b-%y', errors='coerce').dt.strftime('%Y-%m-%d')
+            # 14-Jul-26 ကဲ့သို့သော text format သို့မဟုတ် standard format အားလုံးကို automatic parse လုပ်ခြင်း
+            df_out['Date'] = pd.to_datetime(df_out['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
         return df_out
     except Exception as e:
         return None
@@ -141,7 +141,7 @@ if df is not None:
             options=["All Dates"] + list(dates_list)
         )
 
-    # ၃။ Filter Logic (မူရင်း ဇယားတွက်ရန်)
+    # ၃။ Filter Logic
     result_df = filtered_df.copy()
     
     if selected_engineer != "All Engineers":
@@ -171,14 +171,21 @@ if df is not None:
         if not numeric_cols.empty:
             summary_list = []
             
-            # Product Name Mapping Dictionaries
+            # မူရင်း Table ကော်လံနာမည်များကို Out Of PM Tab ထဲက Product Name စာသားများနှင့် တိုက်ရိုက်ချိတ်ဆက်ရန် အားကောင်းသော mapping
+            # (စာလုံးကြီး/သေး နှင့် space အားလုံးကို lower().strip() ဖြင့် ကိုင်တွယ်ပါမည်)
             product_name_mapping = {
-                'SC-APC,SM,SX 3.0MM (1M)': 'Patch Cords (1M)',
-                'Sleeves with 2 steels': 'Sleeve with 2 Steels',
-                'Pencil Kit (Standard)': 'Standard (Pencil Kit)',
-                'Pencil Kit (Customized)': 'Customize (Pencil Kit)',
-                'Customize (Pencil Kit)': 'Customize (Pencil Kit)',
-                'Patch Cords (1.5M)': 'Patch Cords (1.5M)'
+                'sc-apc,sm,sx 3.0mm (1m)': 'patch cords (1m)',
+                'patch cords(sc/apc) 1m': 'patch cords (1m)',
+                'sleeves with 2 steels': 'sleeve with 2 steels',
+                'sleeve with 2 steels': 'sleeve with 2 steels',
+                'pencil kit (standard)': 'standard (pencil kit)',
+                'standard (pencil kit , white)': 'standard (pencil kit)',
+                'standard (pencil kit)': 'standard (pencil kit)',
+                'pencil kit (customized)': 'customize (pencil kit)',
+                'customize (pencil kit , white)': 'customize (pencil kit)',
+                'customize (pencil kit)': 'customize (pencil kit)',
+                'patch cords (1.5m)': 'patch cords (1.5m)',
+                'patch cords(sc/apc) 1.5m': 'patch cords (1.5m)'
             }
             
             for col in numeric_cols:
@@ -190,31 +197,32 @@ if df is not None:
                 if df_out is not None and 'Product Name' in df_out.columns and 'Out' in df_out.columns:
                     temp_out_df = df_out.copy()
                     
-                    # နေရာလွတ်များဖယ်ပြီး mapping ညှိခြင်း
-                    temp_out_df['Mapped_Product'] = temp_out_df['Product Name'].astype(str).str.strip().map(product_name_mapping).fillna(temp_out_df['Product Name'].astype(str).str.strip())
+                    # ဒေတာသန့်စင်ခြင်း
+                    temp_out_df['Clean_Product'] = temp_out_df['Product Name'].astype(str).str.strip().str.lower()
+                    temp_out_df['Mapped_Product'] = temp_out_df['Clean_Product'].map(product_name_mapping)
                     
-                    item_out_df = temp_out_df[temp_out_df['Mapped_Product'].str.lower() == col.strip().lower()]
+                    # သက်ဆိုင်ရာ Accessories အလိုက် စစ်ထုတ်ခြင်း
+                    target_col_lower = col.strip().lower()
+                    item_out_df = temp_out_df[temp_out_df['Mapped_Product'] == target_col_lower]
                     
-                    # Engineer Filter စစ်ဆေးခြင်း
+                    # Engineer Name Filter စစ်ခြင်း (စာသားပါဝင်မှုကို သေချာစစ်ဆေးသည်)
                     if selected_engineer != "All Engineers" and 'Eng Name' in item_out_df.columns:
-                        # နာမည် အတိအကျတူညီမှု သို့မဟုတ် ID မတူညီပါက Substring ပါဝင်မှုဖြင့် filter လုပ်သည်
-                        clean_eng_name = selected_engineer.split('-')[0].strip()
-                        item_out_df = item_out_df[
-                            (item_out_df['Eng Name'].astype(str).str.strip() == selected_engineer) | 
-                            (item_out_df['Eng Name'].astype(str).str.contains(clean_eng_name, case=False, na=False))
-                        ]
+                        clean_eng_name = selected_engineer.split('-')[0].strip().lower()
+                        item_out_df = item_out_df[item_out_df['Eng Name'].astype(str).str.lower().str.contains(clean_eng_name, na=False)]
                         
-                    # Date Filter စစ်ဆေးခြင်း
+                    # Date Filter စစ်ခြင်း
                     if selected_date != "All Dates" and 'Date' in item_out_df.columns:
                         item_out_df = item_out_df[item_out_df['Date'] == selected_date]
                         
-                    # Out တန်ဖိုးများကို ပေါင်းယူခြင်း
+                    # Out ကော်လံမှ တန်ဖိုးများကို ပေါင်းယူခြင်း
                     total_out_val = pd.to_numeric(item_out_df['Out'], errors='coerce').sum()
                 
-                # ဂ။ Return to PM = Out - Total Usage တွက်ချက်ခြင်း
+                # ဂ။ Return to PM = Out - Total Usage
                 return_to_pm_val = total_out_val - total_usage_val
                 
                 def format_num(val):
+                    if pd.isna(val):
+                        return "0"
                     if val % 1 == 0:
                         return f"{int(val)}"
                     return f"{val:.1f}"
