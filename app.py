@@ -8,7 +8,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 🎨 ဇယားအားလုံးကို ၁၀၀% စာလုံးမကျိုးစေဘဲ အလယ်တည့်တည့် (Center) သို့ ပို့ပေးသည့် Ultimate CSS
+# 🎨 ဇယားအားလုံး၏ Header နှင့် Cells များရှိ စာသားအားလုံးကို အလျားလိုက်/ဒေါင်လိုက် (Horizontal & Vertical) ၁၀၀% အလယ်ဗဟိုသို့ ရောက်စေမည့် CSS
 st.html("""
 <style>
     /* ၁။ ဇယားတစ်ခုလုံးကို ဖုန်းစခရင်ပေါ်တွင် မညှပ်သွားစေဘဲ ဘေးတိုက်ရွှေ့ကြည့်နိုင်အောင် (Scrollable) ပြုလုပ်ခြင်း */
@@ -25,21 +25,23 @@ st.html("""
         border-collapse: collapse !important;
     }
 
-    /* ၂။ Headers (ခေါင်းစဉ်စာသား) အားလုံးကို အလယ်ပို့ပြီး စာလုံးလုံးဝမကွဲစေရန် ထိန်းချုပ်ခြင်း */
+    /* ၂။ Headers (ခေါင်းစဉ်များ) ကို ဘယ်/ညာ ကော အပေါ်/အောက် ပါ အလယ်တည့်တည့်ပို့ခြင်း */
     div[data-testid="stTable"] th {
         text-align: center !important;
-        vertical-align: middle !important;
+        vertical-align: middle !important; /* ဒေါင်လိုက် (Vertical) အလယ်ပို့ရန် */
         white-space: nowrap !important; /* စာလုံးအောက်ကြောင်းဆင်းမသွားစေရန် */
         background-color: #f0f2f6 !important;
-        padding: 10px 15px !important;
+        padding: 12px 15px !important;
+        height: 50px !important; /* ခေါင်းစဉ်များ ညီညာစေရန် */
     }
     
-    /* ၃။ Cells (အချက်အလက်) အားလုံးကို အလယ်ပို့ပြီး စာလုံးလုံးဝမကွဲစေရန် ထိန်းချုပ်ခြင်း */
+    /* ၃။ Cells (အချက်အလက်ဒေတာများ) ကို ဘယ်/ညာ ကော အပေါ်/အောက် ပါ အလယ်တည့်တည့်ပို့ခြင်း */
     div[data-testid="stTable"] td {
         text-align: center !important;
-        vertical-align: middle !important;
+        vertical-align: middle !important; /* ဒေါင်လိုက် (Vertical) အလယ်ပို့ရန် */
         white-space: nowrap !important; /* နာမည်ရှည်များ စာကြောင်းမကွဲစေရန် */
-        padding: 8px 15px !important;
+        padding: 10px 15px !important;
+        height: 45px !important; /* ဒေတာတန်းများ အမြင့်ညီညာစေရန် */
     }
 </style>
 """)
@@ -147,7 +149,7 @@ if df is not None:
         for col in formatted_df.select_dtypes(include='number').columns:
             formatted_df[col] = formatted_df[col].apply(lambda x: f"{int(x)}" if x % 1 == 0 else f"{x:.1f}")
             
-        # ⚠️ st.dataframe အစား CSS အမိန့်နာခံသော st.table ကို အသုံးပြုလိုက်ပါပြီ
+        # CSS အမိန့်နာခံသော st.table ကို အသုံးပြုပါသည်
         st.table(formatted_df)
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
@@ -173,7 +175,7 @@ if df is not None:
             
             summary_table = pd.DataFrame(summary_list)
             
-            # ⚠️ စုစုပေါင်းဇယားကိုလည်း ခေါင်းစဉ်ရော အချက်အလက်ပါ Center ကျစေရန် st.table ဖြင့် ရေးဆွဲခြင်း
+            # စုစုပေါင်းဇယားကိုလည်း ခေါင်းစဉ်ရော အချက်အလက်ပါ Center ကျစေရန် st.table ဖြင့် ရေးဆွဲခြင်း
             st.table(summary_table)
             
     else:
