@@ -164,6 +164,12 @@ if df is not None:
         st.table(formatted_df)
 total_upload = len(result_df)
 st.success(f"✅ Total Upload : {total_upload}")
+
+# ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
+st.write("")
+
+# Title (Subheader) ကို အလယ်ပို့ခြင်း
+st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used Summary</h3>", unsafe_allow_html=True)
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
         st.write("") 
