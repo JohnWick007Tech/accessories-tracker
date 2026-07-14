@@ -162,6 +162,11 @@ if df is not None:
             
         # CSS အမိန့်နာခံသော st.table ကို အသုံးပြုပါသည်
         st.table(formatted_df)
+
+        # ✅ Total Upload (Table Row Count)
+total_upload = len(result_df)
+
+st.success(f"✅ Total Upload : {total_upload}")
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
         st.write("") 
