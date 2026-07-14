@@ -1,14 +1,14 @@
 import streamlit as st
 import pandas as pd
 
-# Page Configuration (ဖုန်းအတွက် ပိုမိုသေသပ်သော အခင်းအကျင်း)
+# Page Configuration
 st.set_page_config(
     page_title="Accessories Tracker", 
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# 🎨 ဇယားကို Screen အတင်းမညှစ်ဘဲ စာလုံးအရှည်အတိုင်း တစ်ကြောင်းတည်း (Center) ပို့ပေးမည့် CSS
+# 🎨 CSS
 st.html("""
 <style>
     div[data-testid="stTable"] {
@@ -54,7 +54,6 @@ st.markdown("<h2 style='text-align: center;'>📱 Eng Usage Tracker</h2>", unsaf
 # ⚠️ သင်၏ Google Sheet Link မူရင်း
 GSHEET_BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
 
-# Tab နာမည်များ သတ်မှတ်ခြင်း
 USAGE_TAB_NAME = "EngUsageTracker"
 OUT_TAB_NAME = "Out Of PM"
 
@@ -72,9 +71,9 @@ def load_usage_data():
 def load_out_data():
     try:
         df_out = pd.read_csv(OUT_CSV_URL)
-        # Google Sheet Format အမျိုးမျိုး (ဥပမာ- 11-Jul-26 သို့မဟုတ် 2026-07-11) ကို standard %Y-%m-%d သို့ ပြောင်းလဲခြင်း
         if 'Date' in df_out.columns:
-            df_out['Date'] = pd.to_datetime(df_out['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
+            # 🔹 14-Jul-26 ကဲ့သို့သော format မျိုးကိုပါ တိကျစွာ format ပြောင်းနိုင်ရန် format='mixed' အသုံးပြုခြင်း
+            df_out['Date'] = pd.to_datetime(df_out['Date'], format='mixed', errors='coerce').dt.strftime('%Y-%m-%d')
         return df_out
     except Exception as e:
         return None
@@ -86,7 +85,7 @@ try:
     df = load_usage_data()
     df_out = load_out_data()
 except Exception as e:
-    st.error(f"❌ ချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
+    st.error(f"❌ ချიტဆက်မှု အဆင်မပြေပါ- {e}")
 
 if df is not None:
     
@@ -108,7 +107,7 @@ if df is not None:
     if not sleeve_col_in_sheet:
         sleeve_col_in_sheet = 'Sleeve with 2 Steels'
 
-    # ၁။ ကော်လံများ စစ်ထုတ်ခြင်းနှင့် ခေါင်းစဉ်များကို အတိုကောက်ပြောင်းလဲခြင်း
+    # ၁။ ကော်လံများ စစ်ထုတ်ခြင်း
     columns_mapping = {
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
@@ -124,7 +123,7 @@ if df is not None:
     filtered_df = df[available_cols].copy()
     filtered_df = filtered_df.rename(columns={col: columns_mapping[col] for col in available_cols})
 
-    # ၂။ Dropdown ရွေးချယ်မှုအပိုင်း (2-Column)
+    # ၂။ Dropdown ရွေးချယ်မှုအပိုင်း
     col1, col2 = st.columns(2)
     
     with col1:
@@ -141,7 +140,7 @@ if df is not None:
             options=["All Dates"] + list(dates_list)
         )
 
-    # ၃။ Filter Logic (မူရင်း Usage Table အတွက်)
+    # ၃။ Filter Logic
     result_df = filtered_df.copy()
     
     if selected_engineer != "All Engineers":
@@ -162,7 +161,7 @@ if df is not None:
             
         st.table(formatted_df)
         
-        # ၅။ စုစုပေါင်းအရေအတွက်နှင့် ဒုတိယ Tab (Out Of PM) မှ နှုတ်ယူတွက်ချက်မှုအပိုင်း
+        # ၅။ Summary
         st.write("") 
         st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used Summary</h3>", unsafe_allow_html=True)
         
@@ -171,7 +170,6 @@ if df is not None:
         if not numeric_cols.empty:
             summary_list = []
             
-            # ဒုတိယ Tab (Out Of PM) ရဲ့ Product Name စာသားများကို မူရင်းဇယားကော်လံများနှင့် Mapping လုပ်ခြင်း
             product_name_mapping = {
                 'SC-APC,SM,SX 3.0MM (1M)': 'Patch Cords (1M)',
                 'Sleeves with 2 steels': 'Sleeve with 2 Steels',
@@ -185,30 +183,31 @@ if df is not None:
                 # က။ မူရင်း သုံးစွဲမှု စုစုပေါင်း (Total Usage)
                 total_usage_val = result_df[col].sum()
                 
-                # ခ။ ဒုတိယ Tab (Out Of PM) ထဲက 'Out' အရေအတွက်ကို Dropdown Filter အလိုက် ရှာဖွေပေါင်းယူခြင်း
+                # ခ။ Out Of PM ထဲက 'Out' ရှာဖွေခြင်း
                 total_out_val = 0
                 if df_out is not None and 'Product Name' in df_out.columns and 'Out' in df_out.columns:
                     temp_out_df = df_out.copy()
                     
-                    # ရှေ့/နောက် space ဖယ်ပြီး map လုပ်ခြင်း
+                    # နေရာလွတ်များဖယ်ပြီး mapping လုပ်ခြင်း
                     temp_out_df['Mapped_Product'] = temp_out_df['Product Name'].astype(str).str.strip().map(product_name_mapping).fillna(temp_out_df['Product Name'].astype(str).str.strip())
                     
-                    # သက်ဆိုင်ရာ Accessories အလိုက် စစ်ထုတ်ခြင်း
                     item_out_df = temp_out_df[temp_out_df['Mapped_Product'].str.lower() == col.strip().lower()]
                     
-                    # 🔹 Dropdown က Filter တွေနဲ့ Out Of PM Tab ကို ညှိနှိုင်းစစ်ထုတ်ခြင်း
+                    # Engineer Filter ချိန်ညှိခြင်း (Dropdown နာမည်အတိုင်း အတိအကျ သို့မဟုတ် တူညီမှုအလိုက် စစ်ထုတ်ခြင်း)
                     if selected_engineer != "All Engineers" and 'Eng Name' in item_out_df.columns:
-                        # နာမည်နောက်က ID ပါတာမပါတာ အဆင်ပြေအောင် ပါဝင်မှုရှိမရှိ (Substring check) ဖြင့် စစ်ဆေးခြင်း
-                        clean_eng_name = selected_engineer.split('-')[0].strip() # ဥပမာ 'Kaung Khant Kyaw-10' ကို 'Kaung Khant Kyaw' ပြောင်းသည်
-                        item_out_df = item_out_df[item_out_df['Eng Name'].astype(str).str.contains(clean_eng_name, case=False, na=False)]
+                        # 🔹 နာမည်အတိုင်း တိုက်ရိုက် သို့မဟုတ် contains နှစ်မျိုးလုံးဖြင့် စစ်ထုတ်ပေးထားပါသည်
+                        item_out_df = item_out_df[
+                            (item_out_df['Eng Name'].astype(str).str.strip() == selected_engineer) | 
+                            (item_out_df['Eng Name'].astype(str).str.contains(selected_engineer.split('-')[0].strip(), case=False, na=False))
+                        ]
                         
+                    # Date Filter ချိန်ညှိခြင်း
                     if selected_date != "All Dates" and 'Date' in item_out_df.columns:
                         item_out_df = item_out_df[item_out_df['Date'] == selected_date]
                         
-                    # Out အရေအတွက် စုစုပေါင်းကို ပေါင်းယူခြင်း
                     total_out_val = pd.to_numeric(item_out_df['Out'], errors='coerce').sum()
                 
-                # 🎯 ဂ။ Out Of PM ထဲကနေ Total Usage ကို နှုတ်ခြင်း (Return to PM = Out - Total Usage)
+                # ဂ။ Return to PM = Out - Total Usage ✅
                 return_to_pm_val = total_out_val - total_usage_val
                 
                 def format_num(val):
