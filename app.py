@@ -8,40 +8,51 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 🎨 ဇယားအားလုံး၏ Header နှင့် Cells များရှိ စာသားအားလုံးကို အလျားလိုက်/ဒေါင်လိုက် (Horizontal & Vertical) ၁၀၀% အလယ်ဗဟိုသို့ ရောက်စေမည့် CSS
+# 🎨 ဇယားကို Screen အတင်းမညှစ်ဘဲ စာလုံးအရှည်အတိုင်း တစ်ကြောင်းတည်း (Center) ပို့ပေးမည့် CSS အသစ်
 st.html("""
 <style>
-    /* ၁။ ဇယားတစ်ခုလုံးကို ဖုန်းစခရင်ပေါ်တွင် မညှပ်သွားစေဘဲ ဘေးတိုက်ရွှေ့ကြည့်နိုင်အောင် (Scrollable) ပြုလုပ်ခြင်း */
+    /* ၁။ ဇယားတစ်ခုလုံးကို ဖုန်းပေါ်တွင် မညှပ်သွားစေဘဲ ဘေးတိုက်ရွှေ့ကြည့်နိုင်အောင် ပြုလုပ်ခြင်း */
     div[data-testid="stTable"] {
         overflow-x: auto !important;
         display: block !important;
         width: 100% !important;
     }
     
+    /* ၂။ ကော်လံများကို Screen အကျယ်အတိုင်း ညှစ်မထားဘဲ စာလုံးအလိုက် အလိုအလျောက် ဆွဲဆန့်စေခြင်း */
     div[data-testid="stTable"] table {
-        width: 100% !important;
+        table-layout: auto !important; /* စာလုံးအရှည်အတိုင်း ကော်လံ ကျယ်ထွက်သွားစေရန် */
+        width: auto !important;
+        min-width: 100% !important;
         margin-left: auto !important;
         margin-right: auto !important;
         border-collapse: collapse !important;
     }
 
-    /* ၂။ Headers (ခေါင်းစဉ်များ) ကို ဘယ်/ညာ ကော အပေါ်/အောက် ပါ အလယ်တည့်တည့်ပို့ခြင်း */
-    div[data-testid="stTable"] th {
+    /* ၃။ Headers (ခေါင်းစဉ်များ) ကို တစ်ကြောင်းတည်း ဒေါင်လိုက်/အလျားလိုက် အလယ်ပို့ခြင်း */
+    div[data-testid="stTable"] th,
+    div[data-testid="stTable"] th * {
         text-align: center !important;
-        vertical-align: middle !important; /* ဒေါင်လိုက် (Vertical) အလယ်ပို့ရန် */
-        white-space: nowrap !important; /* စာလုံးအောက်ကြောင်းဆင်းမသွားစေရန် */
-        background-color: #f0f2f6 !important;
-        padding: 12px 15px !important;
-        height: 50px !important; /* ခေါင်းစဉ်များ ညီညာစေရန် */
+        vertical-align: middle !important;
+        white-space: nowrap !important; /* စာလုံးလုံးဝ အောက်မဆင်းစေရန် */
+        word-break: keep-all !important;
     }
     
-    /* ၃။ Cells (အချက်အလက်ဒေတာများ) ကို ဘယ်/ညာ ကော အပေါ်/အောက် ပါ အလယ်တည့်တည့်ပို့ခြင်း */
-    div[data-testid="stTable"] td {
+    div[data-testid="stTable"] th {
+        background-color: #f0f2f6 !important;
+        padding: 12px 20px !important;
+    }
+    
+    /* ၄။ Cells (ဒေတာများ) ကို တစ်ကြောင်းတည်း ဒေါင်လိုက်/အလျားလိုက် အလယ်ပို့ခြင်း */
+    div[data-testid="stTable"] td,
+    div[data-testid="stTable"] td * {
         text-align: center !important;
-        vertical-align: middle !important; /* ဒေါင်လိုက် (Vertical) အလယ်ပို့ရန် */
-        white-space: nowrap !important; /* နာမည်ရှည်များ စာကြောင်းမကွဲစေရန် */
-        padding: 10px 15px !important;
-        height: 45px !important; /* ဒေတာတန်းများ အမြင့်ညီညာစေရန် */
+        vertical-align: middle !important;
+        white-space: nowrap !important; /* နာမည်ရှည်များပါ လုံးဝတစ်ကြောင်းတည်း ဖြစ်စေရန် */
+        word-break: keep-all !important;
+    }
+    
+    div[data-testid="stTable"] td {
+        padding: 10px 20px !important;
     }
 </style>
 """)
@@ -65,7 +76,7 @@ df = None
 try:
     df = load_data()
 except Exception as e:
-    st.error(f"❌ ချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
+    st.error(f"❌ ချက်ဆက်မှု အဆင်မပြေပါ- {e}")
 
 # ဒေတာ အောင်မြင်စွာ ရရှိမှသာ အောက်ပါ UI ပိုင်းများကို လုပ်ဆောင်မည်
 if df is not None:
@@ -141,7 +152,7 @@ if df is not None:
 
     # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
     if not result_df.empty:
-        # Title (Subheader) ကို HTML သုံး၍ အလယ်ပို့ခြင်း
+        # Title (Subheader) ကို အလယ်ပို့ခြင်း
         st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား</h3>", unsafe_allow_html=True)
         
         # ကိန်းဂဏန်းဒေတာများကို integer ဖြစ်လျှင် ဒဿမဖြုတ်ရန် format ပြုလုပ်ခြင်း
@@ -154,7 +165,7 @@ if df is not None:
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း
         st.write("") 
-        # Title (Subheader) ကို HTML သုံး၍ အလယ်ပို့ခြင်း
+        # Title (Subheader) ကို အလယ်ပို့ခြင်း
         st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used Summary</h3>", unsafe_allow_html=True)
         
         # ကိန်းဂဏန်း Column များကိုသာ စုစုပေါင်းတွက်မည်
