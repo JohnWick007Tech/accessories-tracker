@@ -70,13 +70,22 @@ def load_usage_data():
 @st.cache_data(ttl=5)
 def load_out_data():
     try:
-        # Row 2 ကို Header အဖြစ် ယူရန် skiprows=1 သုံးပြီး ဖတ်သည်
-        df_out = pd.read_csv(OUT_CSV_URL, skiprows=1)
-        df_out.columns = df_out.columns.str.strip()
+        # ပထမဆုံး row အပါအဝင် အကုန်ဖတ်လိုက်သည် (ရက်စွဲ ပျောက်မသွားစေရန်)
+        df_out_raw = pd.read_csv(OUT_CSV_URL, header=None)
         
-        # Date ကော်လံကို အားကောင်းကောင်းဖြင့် parse လုပ်ပြီး standard စာသားပြောင်းလဲခြင်း
+        # ပထမဆုံး row ရဲ့ ပထမဆုံး cell က ရက်စွဲကို ယူသည် (ဥပမာ 2026-07-14)
+        top_date = df_out_raw.iloc[0, 0]
+        
+        # ဒုတိယ row ကို ခေါင်းစဉ်အဖြစ် သတ်မှတ်သည်
+        headers = df_out_raw.iloc[1].str.strip().tolist()
+        df_out = df_out_raw.iloc[2:].copy()
+        df_out.columns = headers
+        
+        # ဗလာဖြစ်နေသော Date ကော်လံကို top_date ဖြင့် အစားထိုးသည်
         if 'Date' in df_out.columns:
+            df_out['Date'] = df_out['Date'].fillna(top_date)
             df_out['Date'] = pd.to_datetime(df_out['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
+            
         return df_out
     except Exception as e:
         return None
@@ -203,12 +212,11 @@ if df is not None:
                     target_col_lower = col.strip().lower()
                     item_out_df = temp_out_df[temp_out_df['Mapped_Product'] == target_col_lower]
                     
-                    # 🔹 Dropdown က ရွေးချယ်ထားသော Engineer အလိုက် စစ်ထုတ်ခြင်း
+                    # Engineer Name အတိအကျ စစ်ထုတ်ခြင်း
                     if selected_engineer != "All Engineers" and 'Eng Name' in item_out_df.columns:
-                        # စာသားချင်း ညှိနှိုင်းမှု ကွက်တိဖြစ်စေရန် strip() နှင့် lower() သုံးပါသည်
                         item_out_df = item_out_df[item_out_df['Eng Name'].astype(str).str.strip().str.lower() == selected_engineer.strip().lower()]
                         
-                    # 🔹 Dropdown က ရွေးချယ်ထားသော Date အလိုက် စစ်ထုတ်ခြင်း
+                    # Date အတိအကျ စစ်ထုတ်ခြင်း
                     if selected_date != "All Dates" and 'Date' in item_out_df.columns:
                         item_out_df = item_out_df[item_out_df['Date'] == selected_date]
                         
