@@ -1,10 +1,14 @@
 import streamlit as st
 import pandas as pd
 
-# Page Configuration (ဖုန်းအတွက် ပိုမိုသေသပ်သော အခင်းအကျင်း)
-st.set_page_config(page_title="Accessories Tracker", layout="centered")
+# Page Configuration (ဖုန်းအတွက် ပိုမိုသေသပ်ပြီး ရှင်းလင်းသော အခင်းအကျင်း)
+st.set_page_config(
+    page_title="Accessories Tracker", 
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-# 📱 HTML မသုံးဘဲ Streamlit ရဲ့ မူရင်း Title ဖြင့် ရေးသားခြင်း
+# App Header ပိုင်း
 st.title("📱 Engineer Accessories Tracker")
 
 # ⚠️ သင်၏ Google Sheet CSV Link အမှန်ကို အောက်ကနေရာတွင် ထည့်ပါ
@@ -22,7 +26,7 @@ def load_data():
 try:
     df = load_data()
     
-    # ၁။ ကော်လံများ စစ်ထုတ်ခြင်း (Township/Car-ID ဖယ်ပြီး TKT/POI/CPE ကော်လံကို ထည့်သွင်းထားသည်)
+    # ၁။ ကော်လံများ စစ်ထုတ်ခြင်းနှင့် ခေါင်းစဉ်များကို အတိုကောက်/နှစ်ဆင့်ပြောင်းလဲခြင်း
     columns_mapping = {
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
@@ -39,10 +43,10 @@ try:
     available_cols = [col for col in columns_mapping.keys() if col in df.columns]
     filtered_df = df[available_cols].copy()
     
-    # Column နာမည်များကို ဖုန်းတွင် ကြည့်ရကျဉ်းအောင် အတိုကောက်ပြောင်းလဲခြင်း
+    # Column နာမည်များကို သတ်မှတ်ချက်အတိုင်း အစားထိုးခြင်း
     filtered_df = filtered_df.rename(columns={col: columns_mapping[col] for col in available_cols})
 
-    # ၂။ Dropdown ရွေးချယ်မှုအပိုင်း (Engineer Name ကော Date ပါ ရွေးချယ်နိုင်ရန်)
+    # ၂။ Dropdown ရွေးချယ်မှုအပိုင်း (အလယ်တည့်တည့်ကျအောင် 2-Column ဖြင့် စနစ်တကျခွဲထားခြင်း)
     col1, col2 = st.columns(2)
     
     with col1:
@@ -75,10 +79,17 @@ try:
     if not result_df.empty:
         st.subheader("📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား")
         
+        # ⚠️ ကိန်းဂဏန်း 0, 1 များ၊ Date များနှင့် အချက်အလက်အားလုံးကို ဇယားအလယ်တည့်တည့် (Center alignment) ရောက်အောင် သတ်မှတ်ခြင်း
+        center_align_config = {
+            col: st.column_config.Column(alignment="center") 
+            for col in result_df.columns
+        }
+        
         st.dataframe(
             result_df, 
             use_container_width=True, 
-            hide_index=True
+            hide_index=True,
+            column_config=center_align_config # Column အားလုံးကို Center ပို့ရန်
         )
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း (ဒဿမ ရှင်းလင်းရေး အပါအဝင်)
@@ -102,11 +113,17 @@ try:
             
             summary_table = pd.DataFrame(summary_list)
             
-            # စုစုပေါင်းပြသမည့် ဇယားကို st.dataframe ဖြင့် စနစ်တကျပြသခြင်း
+            # စုစုပေါင်းပြသမည့် ဇယားကော်လံများကိုလည်း အလယ်ဗဟို (Center) သို့ စနစ်တကျ ပို့ခြင်း
+            summary_config = {
+                'ပစ္စည်းအမျိုးအမည်': st.column_config.Column(alignment="center"),
+                'စုစုပေါင်းအရေအတွက်': st.column_config.Column(alignment="center")
+            }
+            
             st.dataframe(
                 summary_table,
                 use_container_width=True,
-                hide_index=True
+                hide_index=True,
+                column_config=summary_config # စုစုပေါင်းဇယားကိုပါ Center ပို့ရန်
             )
             
     else:
