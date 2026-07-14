@@ -65,29 +65,10 @@ GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et
 
 @st.cache_data(ttl=30) # Data update မြန်စေရန် စက္ကန့် ၃၀ သတ်မှတ်
 def load_data():
-    # အမှားကင်းအောင် ပုံမှန်အတိုင်း အရင်ဖတ်ယူမည်
-    df_raw = pd.read_csv(GSHEET_CSV_URL)
-    
-    # 🛠️ Row 2 ကို ခေါင်းစဉ် (Header) အဖြစ် ပရိုဂရမ်နည်းလမ်းဖြင့် အစားထိုးလဲလှယ်ခြင်း
-    # (Row 1 ကို ဖယ်ထုတ်ပြီး Row 2 ပါ စာသားများကို Column နာမည်များအဖြစ် သတ်မှတ်)
-    if len(df_raw) > 0:
-        new_header = df_raw.iloc[0] # Python တွင် ပထမဆုံးလိုင်းသည် မူလ sheet ၏ Row 2 ဖြစ်လာသည်
-        df = df_raw[1:].copy() # ကျန်သော data များကို ယူသည်
-        df.columns = new_header # ခေါင်းစဉ်အသစ် သတ်မှတ်သည်
-        df = df.reset_index(drop=True)
-    else:
-        df = df_raw
-        
-    # Column နာမည်များတွင် ကွက်လပ်အပိုများပါက ဖယ်ရှားရန်
-    df.columns = [str(c).strip() for c in df.columns]
-
+    df = pd.read_csv(GSHEET_CSV_URL)
     # Date Column ကို စာသားမှ နေ့စွဲ Format သို့ ပြောင်းလဲခြင်း
     if 'Date' in df.columns:
-        # လွဲချော်မှုမရှိစေရန် ထပ်မံစစ်ဆေးပြီး ပြောင်းလဲခြင်း
-        try:
-            df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
-        except:
-            pass
+        df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
     return df
 
 # ဒေတာဆွဲယူခြင်းကို သီးသန့် try-except ဖြင့် ဖမ်းယူခြင်း
@@ -110,7 +91,7 @@ if df is not None:
     ]
     
     for col in df.columns:
-        if col in possible_sleeve_names:
+        if col.strip() in possible_sleeve_names:
             sleeve_col_in_sheet = col
             break
             
@@ -140,11 +121,6 @@ if df is not None:
     
     # Column နာမည်များကို အစားထိုးခြင်း
     filtered_df = filtered_df.rename(columns={col: columns_mapping[col] for col in available_cols})
-
-    # ကိန်းဂဏန်း ကော်လံများကို တွက်ချက်နိုင်ရန် numeric type သို့ အတင်းပြောင်းလဲခြင်း
-    for col in filtered_df.columns:
-        if col not in ['Date', 'Engineer Name', 'TKT/POI/CPE']:
-            filtered_df[col] = pd.to_numeric(filtered_df[col], errors='coerce').fillna(0)
 
     # ၂။ Dropdown ရွေးချယ်မှုအပိုင်း (2-Column ဖြင့် စနစ်တကျခွဲထားခြင်း)
     col1, col2 = st.columns(2)
