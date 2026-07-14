@@ -4,8 +4,8 @@ import pandas as pd
 # Page Configuration (ဖုန်းအတွက် ပိုမိုသေသပ်သော အခင်းအကျင်း)
 st.set_page_config(page_title="Accessories Tracker", layout="centered")
 
-# CSS style များကို သုံးမည့်အစား Streamlit ရဲ့ built-in markdown ဖြင့် ခေါင်းစဉ်ကို အလယ်ပို့ခြင်း
-st.markdown("<h1 style='text-align: center;'>📱 Engineer Accessories Tracker</h1>", unsafe_allowed_html=True)
+# 📱 HTML မသုံးဘဲ Streamlit ရဲ့ မူရင်း Title ဖြင့် ရေးသားခြင်း
+st.title("📱 Engineer Accessories Tracker")
 
 # ⚠️ သင်၏ Google Sheet CSV Link အမှန်ကို အောက်ကနေရာတွင် ထည့်ပါ
 GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1abc123XYZ/gviz/tq?tqx=out:csv"
@@ -27,19 +27,19 @@ try:
         'Date': 'Date',
         'Engineer Name': 'Engineer Name',
         'TKT/POI/CPE': 'TKT/POI/CPE',                         
-        'Patch Cords(SC/APC) 1M': 'Patch Cords\n(1M)',          
-        'Patch Cords(SC/APC) 1.5M': 'Patch Cords\n(1.5M)',
-        'One Core OTB Box': 'One Core\nOTB Box',
+        'Patch Cords(SC/APC) 1M': 'Patch Cords (1M)',          
+        'Patch Cords(SC/APC) 1.5M': 'Patch Cords (1.5M)',
+        'One Core OTB Box': 'One Core OTB Box',
         'Sleeve': 'Sleeve',
-        'Customize (Pencil Kit , white)': 'Customize\n(Pencil Kit)',
-        'Standard (Pencil Kit , white)': 'Standard\n(Pencil Kit)'
+        'Customize (Pencil Kit , white)': 'Customize (Pencil Kit)',
+        'Standard (Pencil Kit , white)': 'Standard (Pencil Kit)'
     }
     
     # လက်ရှိ Sheet ထဲမှာ ရှိနေတဲ့ column တွေကိုပဲ ယူမည်
     available_cols = [col for col in columns_mapping.keys() if col in df.columns]
     filtered_df = df[available_cols].copy()
     
-    # Column နာမည်များကို ဖုန်းတွင် ကြည့်ရကျဉ်းအောင် အတိုကောက်နှင့် ၂ ဆင့်ပုံစံ ပြောင်းခြင်း
+    # Column နာမည်များကို ဖုန်းတွင် ကြည့်ရကျဉ်းအောင် အတိုကောက်ပြောင်းလဲခြင်း
     filtered_df = filtered_df.rename(columns={col: columns_mapping[col] for col in available_cols})
 
     # ၂။ Dropdown ရွေးချယ်မှုအပိုင်း (Engineer Name ကော Date ပါ ရွေးချယ်နိုင်ရန်)
@@ -73,7 +73,7 @@ try:
 
     # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
     if not result_df.empty:
-        st.markdown("<h3 style='text-align: center;'>📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား</h3>", unsafe_allowed_html=True)
+        st.subheader("📊 ကြည့်ရှုနေသော မှတ်တမ်းဇယား")
         
         st.dataframe(
             result_df, 
@@ -82,7 +82,7 @@ try:
         )
         
         # ၅။ စုစုပေါင်းအရေအတွက် တွက်ချက်မှုအပိုင်း (ဒဿမ ရှင်းလင်းရေး အပါအဝင်)
-        st.markdown("<h3 style='text-align: center;'>📈 Total Used Summary</h3>", unsafe_allowed_html=True)
+        st.subheader("📈 Total Used Summary")
         
         # ကိန်းဂဏန်း Column များကိုသာ စုစုပေါင်းတွက်မည်
         numeric_cols = result_df.select_dtypes(include='number').columns
@@ -102,7 +102,7 @@ try:
             
             summary_table = pd.DataFrame(summary_list)
             
-            # စုစုပေါင်းပြသမည့် ဇယားကို st.dataframe ဖြင့် အဆင်ပြေစွာပြသခြင်း
+            # စုစုပေါင်းပြသမည့် ဇယားကို st.dataframe ဖြင့် စနစ်တကျပြသခြင်း
             st.dataframe(
                 summary_table,
                 use_container_width=True,
