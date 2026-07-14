@@ -57,10 +57,10 @@ st.html("""
 </style>
 """)
 
-# App Header (HTML သုံး၍ အလယ်သို့ ပို့ထားပါသည်)
+# App Header
 st.markdown("<h2 style='text-align: center;'>📱 Eng Usage Tracker</h2>", unsafe_allow_html=True)
 
-# ⚠️ သင်၏ Google Sheet Link မူရင်း (Tab နာမည်မပါဝင်သော အပိုင်းအထိ)
+# ⚠️ သင်၏ Google Sheet Link မူရင်း
 GSHEET_BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
 
 # Tab နာမည်များ သတ်မှတ်ခြင်း
@@ -70,7 +70,7 @@ OUT_TAB_NAME = "Out Of PM"          # ဒုတိယပစ္စည်းထု
 USAGE_CSV_URL = f"{GSHEET_BASE_URL}/gviz/tq?tqx=out:csv&sheet={USAGE_TAB_NAME}"
 OUT_CSV_URL = f"{GSHEET_BASE_URL}/gviz/tq?tqx=out:csv&sheet={OUT_TAB_NAME}"
 
-@st.cache_data(ttl=30) # Data update မြန်စေရန် စက္ကန့် ၃၀ သတ်မှတ်
+@st.cache_data(ttl=30)
 def load_usage_data():
     df = pd.read_csv(USAGE_CSV_URL)
     if 'Date' in df.columns:
@@ -87,7 +87,7 @@ def load_out_data():
     except Exception as e:
         return None
 
-# ဒေတာဆွဲယူခြင်းကို သီးသန့် try-except ဖြင့် ဖမ်းယူခြင်း
+# ဒေတာဆွဲယူခြင်း
 df = None
 df_out = None
 try:
@@ -96,17 +96,11 @@ try:
 except Exception as e:
     st.error(f"❌ ချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
 
-# ဒေတာ အောင်မြင်စွာ ရရှိမှသာ အောက်ပါ UI ပိုင်းများကို လုပ်ဆောင်မည်
 if df is not None:
     
-    # 🔍 Google Sheet ထဲတွင် Sleeve / Sleeves Column နာမည်ကို ရှာဖွေခြင်း
+    # 🔍 Sleeve Column နာမည်ရှာဖွေခြင်း logic
     sleeve_col_in_sheet = None
-    possible_sleeve_names = [
-        'Sleeves with 2 steels', 
-        'Sleeve with 2 Steels', 
-        'Sleeves with 2 Steels', 
-        'Sleeve with 2 steels'
-    ]
+    possible_sleeve_names = ['Sleeves with 2 steels', 'Sleeve with 2 Steels', 'Sleeves with 2 Steels', 'Sleeve with 2 steels']
     
     for col in df.columns:
         if col.strip() in possible_sleeve_names:
@@ -136,11 +130,9 @@ if df is not None:
     
     available_cols = [col for col in columns_mapping.keys() if col in df.columns]
     filtered_df = df[available_cols].copy()
-    
-    # Column နာမည်များကို အစားထိုးခြင်း
     filtered_df = filtered_df.rename(columns={col: columns_mapping[col] for col in available_cols})
 
-    # ၂။ Dropdown ရွေးချယ်မှုအပိုင်း (2-Column ဖြင့် စနစ်တကျခွဲထားခြင်း)
+    # ၂။ Dropdown ရွေးချယ်မှုအပိုင်း (2-Column)
     col1, col2 = st.columns(2)
     
     with col1:
@@ -157,7 +149,7 @@ if df is not None:
             options=["All Dates"] + list(dates_list)
         )
 
-    # ၃။ Filter Logic (ရွေးချယ်မှုအပေါ်မူတည်ပြီး စစ်ထုတ်ခြင်း)
+    # ၃။ Filter Logic
     result_df = filtered_df.copy()
     
     if selected_engineer != "All Engineers":
@@ -170,80 +162,4 @@ if df is not None:
 
     # ၄။ ရလဒ်အား Table ဖြင့် ပြသခြင်း
     if not result_df.empty:
-        # Title (Subheader) ကို အလယ်ပို့ခြင်း
-        st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 Engineers Usages Table</h3>", unsafe_allow_html=True)
-        
-        # ကိန်းဂဏန်းဒေတာများကို integer ဖြစ်လျှင် ဒဿမဖြုတ်ရန် format ပြုလုပ်ခြင်း
-        formatted_df = result_df.copy()
-        for col in formatted_df.select_dtypes(include='number').columns:
-            formatted_df[col] = formatted_df[col].apply(lambda x: f"{int(x)}" if x % 1 == 0 else f"{x:.1f}")
-            
-        # CSS အမိန့်နာခံသော st.table ကို အသုံးပြုပါသည်
-        st.table(formatted_df)
-        
-        # ၅။ စုစုပေါင်းအရေအတွက်နှင့် ဒုတိယ Tab (Out Of PM) မှ နှုတ်ယူတွက်ချက်မှုအပိုင်း
-        st.write("") 
-        st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used Summary</h3>", unsafe_allow_html=True)
-        
-        # ကိန်းဂဏန်း Column များကိုသာ စုစုပေါင်းတွက်မည်
-        numeric_cols = result_df.select_dtypes(include='number').columns
-        
-        if not numeric_cols.empty:
-            summary_list = []
-            
-            # ဒုတိယ Tab (Out Of PM) စာရင်းမှ ပစ္စည်းနာမည်များကို မူရင်းဇယားခေါင်းစဉ်များနှင့် ကိုက်ညီအောင် လုပ်ဆောင်ပေးသည့် Mapping
-            product_name_mapping = {
-                'SC-APC,SM,SX 3.0MM (1M)': 'Patch Cords (1M)',
-                'Sleeves with 2 steels': 'Sleeve with 2 Steels',
-                'Pencil Kit (Standard)': 'Standard (Pencil Kit)',
-                'Pencil Kit (Customized)': 'Customize (Pencil Kit)',
-                'Customize (Pencil Kit)': 'Customize (Pencil Kit)',
-                'Patch Cords (1.5M)': 'Patch Cords (1.5M)'
-            }
-            
-            for col in numeric_cols:
-                # က။ မူရင်း သုံးစွဲမှု စုစုပေါင်း (Total Usage)
-                total_usage_val = result_df[col].sum()
-                
-                # ခ။ ဒုတိယ Tab (Out Of PM) စာရင်းထဲမှ နှုတ်ရန်အတွက် ရှာဖွေတွက်ချက်ခြင်း
-                total_out_val = 0
-                if df_out is not None and 'Product Name' in df_out.columns and 'Out' in df_out.columns:
-                    temp_out_df = df_out.copy()
-                    
-                    # ရှေ့/နောက် space များကို ဖယ်ရှားပြီး mapping ပြုလုပ်ခြင်း
-                    temp_out_df['Mapped_Product'] = temp_out_df['Product Name'].astype(str).str.strip().map(product_name_mapping).fillna(temp_out_df['Product Name'].astype(str).str.strip())
-                    
-                    # လက်ရှိတွက်ချက်နေတဲ့ Accessories အမျိုးအစားအလိုက် စစ်ထုတ်ခြင်း
-                    item_out_df = temp_out_df[temp_out_df['Mapped_Product'].str.lower() == col.strip().lower()]
-                    
-                    # Engineer နှင့် Date Dropdown Filters များနှင့် ကိုက်ညီအောင် ထပ်မံစစ်ထုတ်ခြင်း
-                    if selected_engineer != "All Engineers" and 'Eng Name' in item_out_df.columns:
-                        item_out_df = item_out_df[item_out_df['Eng Name'].astype(str).str.strip() == selected_engineer]
-                    if selected_date != "All Dates" and 'Date' in item_out_df.columns:
-                        item_out_df = item_out_df[item_out_df['Date'] == selected_date]
-                        
-                    # Out ကော်လံရှိ အရေအတွက်များကို စုစုပေါင်းပေါင်းယူခြင်း
-                    total_out_val = pd.to_numeric(item_out_df['Out'], errors='coerce').sum()
-                
-                # ဂ။ Return to PM Usage ကို တွက်ချက်ခြင်း (Total Usage - Total Out)
-                return_to_pm_val = total_usage_val - total_out_val
-                
-                # ကိန်းဂဏန်းပြသမှု Format ညှိခြင်း
-                def format_num(val):
-                    if val % 1 == 0:
-                        return f"{int(val)}"
-                    return f"{val:.1f}"
-                
-                summary_list.append({
-                    'Accessories': col, 
-                    'Total Usage': format_num(total_usage_val),
-                    'Return to PM Usage': format_num(return_to_pm_val)
-                })
-            
-            summary_table = pd.DataFrame(summary_list)
-            
-            # စုစုပေါင်းဇယားကိုလည်း ခေါင်းစဉ်ရော အချက်အလက်ပါ Center ကျစေရန် st.table ဖြင့် ရေးဆွဲခြင်း
-            st.table(summary_table)
-            
-    else:
-        st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
+        st.markdown("<h3 style
