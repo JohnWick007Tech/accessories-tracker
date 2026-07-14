@@ -70,10 +70,10 @@ def load_usage_data():
 @st.cache_data(ttl=5)
 def load_out_data():
     try:
-        df_out = pd.read_csv(OUT_CSV_URL)
+        # 🔹 header=1 ထည့်လိုက်ခြင်းဖြင့် Row 2 ကို ခေါင်းစဉ်အဖြစ် စတင်ဖတ်ပါမည်
+        df_out = pd.read_csv(OUT_CSV_URL, header=1)
         
-        # 🔹 Column Position (Index) အလိုက် ကော်လံများကို နာမည်အတိအကျ ပြန်ပေးခြင်း
-        # Column A -> Index 0, Column C -> Index 2, Column E -> Index 4, Column G -> Index 6
+        # ကော်လံ တည်နေရာများအလိုက် နာမည်ပြောင်းလဲသတ်မှတ်ခြင်း
         rename_dict = {}
         if len(df_out.columns) > 0: rename_dict[df_out.columns[0]] = 'Out_Date'       # Column A
         if len(df_out.columns) > 2: rename_dict[df_out.columns[2]] = 'Out_EngName'    # Column C
@@ -81,9 +81,6 @@ def load_out_data():
         if len(df_out.columns) > 6: rename_dict[df_out.columns[6]] = 'Out_Qty'        # Column G
         
         df_out = df_out.rename(columns=rename_dict)
-        
-        if 'Out_Date' in df_out.columns:
-            df_out['Out_Date'] = pd.to_datetime(df_out['Out_Date'], errors='coerce').dt.strftime('%Y-%m-%d')
         return df_out
     except Exception as e:
         return None
@@ -208,16 +205,9 @@ if df is not None:
                     temp_out_df['Mapped_Product'] = temp_out_df['Clean_Product'].map(product_name_mapping)
                     
                     target_col_lower = col.strip().lower()
-                    item_out_df = temp_out_df[temp_out_df['Mapped_Product'] == target_col_lower]
                     
-                    # Engineer Filter စစ်ခြင်း
-                    if selected_engineer != "All Engineers" and 'Out_EngName' in item_out_df.columns:
-                        clean_eng_name = selected_engineer.split('-')[0].strip().lower()
-                        item_out_df = item_out_df[item_out_df['Out_EngName'].astype(str).str.lower().str.contains(clean_eng_name, na=False)]
-                        
-                    # Date Filter စစ်ခြင်း
-                    if selected_date != "All Dates" and 'Out_Date' in item_out_df.columns:
-                        item_out_df = item_out_df[item_out_df['Out_Date'] == selected_date]
+                    # ရက်စွဲ နှင့် အင်ဂျင်နီယာ နာမည်ကို မစစ်တော့ဘဲ Product Name တစ်ခုတည်းဖြင့်သာ စစ်ထုတ်ပေါင်းရလဒ် ယူသည်
+                    item_out_df = temp_out_df[temp_out_df['Mapped_Product'] == target_col_lower]
                         
                     total_out_val = pd.to_numeric(item_out_df['Out_Qty'], errors='coerce').sum()
                 
