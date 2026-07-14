@@ -65,53 +65,10 @@ GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et
 
 @st.cache_data(ttl=30) # Data update မြန်စေရန် စက္ကန့် ၃၀ သတ်မှတ်
 def load_data():
-    # 🛠️ [ပြင်ဆင်ချက်] Row 2 ကို Title ခေါင်းစဉ်အဖြစ် သတ်မှတ်ရန် header=1 ထည့်သွင်းခြင်း (0 မှစတင်ရေတွက်သောကြောင့် 1 သည် Row 2 ဖြစ်သည်)
-    df = pd.read_csv(GSHEET_CSV_URL, header=1)
+    # အမှားကင်းအောင် ပုံမှန်အတိုင်း အရင်ဖတ်ယူမည်
+    df_raw = pd.read_csv(GSHEET_CSV_URL)
     
-    # Date Column ကို စာသားမှ နေ့စွဲ Format သို့ ပြောင်းလဲခြင်း
-    if 'Date' in df.columns:
-        df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
-    return df
-
-# ဒေတာဆွဲယူခြင်းကို သီးသန့် try-except ဖြင့် ဖမ်းယူခြင်း
-df = None
-try:
-    df = load_data()
-except Exception as e:
-    st.error(f"❌ ချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
-
-# ဒေတာ အောင်မြင်စွာ ရရှိမှသာ အောက်ပါ UI ပိုင်းများကို လုပ်ဆောင်မည်
-if df is not None:
-    
-    # 🔍 Google Sheet ထဲတွင် Sleeve / Sleeves Column နာမည်ကို ရှာဖွေခြင်း
-    sleeve_col_in_sheet = None
-    possible_sleeve_names = [
-        'Sleeves with 2 steels', 
-        'Sleeve with 2 Steels', 
-        'Sleeves with 2 Steels', 
-        'Sleeve with 2 steels'
-    ]
-    
-    for col in df.columns:
-        if col.strip() in possible_sleeve_names:
-            sleeve_col_in_sheet = col
-            break
-            
-    if not sleeve_col_in_sheet:
-        for col in df.columns:
-            if 'sleeve' in col.lower() and '2' in col:
-                sleeve_col_in_sheet = col
-                break
-                
-    if not sleeve_col_in_sheet:
-        sleeve_col_in_sheet = 'Sleeve with 2 Steels'
-
-    # ၁။ ကော်လံများ စစ်ထုတ်ခြင်းနှင့် ခေါင်းစဉ်များကို အတိုကောက်ပြောင်းလဲခြင်း
-    columns_mapping = {
-        'Date': 'Date',
-        'Engineer Name': 'Engineer Name',
-        'TKT/POI/CPE': 'TKT/POI/CPE',                        
-        'Patch Cords(SC/APC) 1M': 'Patch Cords (1M)',          
-        'Patch Cords(SC/APC) 1.5M': 'Patch Cords (1.5M)',
-        sleeve_col_in_sheet: 'Sleeve with 2 Steels',
-        'Customize
+    # 🛠️ Row 2 ကို ခေါင်းစဉ် (Header) အဖြစ် ပရိုဂရမ်နည်းလမ်းဖြင့် အစားထိုးလဲလှယ်ခြင်း
+    # (Row 1 ကို ဖယ်ထုတ်ပြီး Row 2 ပါ စာသားများကို Column နာမည်များအဖြစ် သတ်မှတ်)
+    if len(df_raw) > 0:
+        new_header = df_raw.iloc[0] # Python တွင် ပထမဆုံးလိုင်းသည် မ
