@@ -152,7 +152,7 @@ with streamlit_analytics.track():
             
             # --- [၄] Total Used & Out & Return to PM Summary ပြသခြင်း ---
             st.write("") 
-            st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used & Out Summary</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Usage Summary</h3>", unsafe_allow_html=True)
             
             numeric_cols = [col for col in ['Patch Cords (1M)', 'Patch Cords (1.5M)', 'Sleeve with 2 Steels', 'Customize (Pencil Kit)', 'Standard (Pencil Kit)'] if col in res_usage.columns]
             
@@ -184,7 +184,7 @@ with streamlit_analytics.track():
                     'Accessories': st.column_config.Column(alignment="left"),
                     'Out': st.column_config.Column(alignment="center"),
                     'Total Usage': st.column_config.Column(alignment="center"),
-                    'Return to PM': st.column_config.Column(alignment="center")
+                    'Return PM': st.column_config.Column(alignment="center")
                 }
                 
                 st.dataframe(
