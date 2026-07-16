@@ -179,20 +179,14 @@ with streamlit_analytics.track():
                 
                 summary_table = pd.DataFrame(summary_data)
                 
-                # 💡 ဒေတာတွေကို စာသားမပြောင်းတော့ဘဲ ကိန်းဂဏန်း (Numeric) အတိုင်း ပြန်ပြောင်းပေးခြင်း
-                # ဒါမှ Streamlit က ကော်လံတွေကို ညာဘက်/အလယ် ကွက်တိ ပြန်ညှိပေးမှာဖြစ်ပါတယ်
-                for col in summary_table.columns:
-                    if 'accessories' not in col.lower():
-                        summary_table[col] = pd.to_numeric(summary_table[col], errors='coerce').fillna(0)
-                
-                # Accessories ကို ဘယ်ကပ် (left) ထားပြီး ကျန်တဲ့ နံပါတ်ကော်လံတွေကို default အတိုင်း ပြန်ထားခြင်း
+                # 💡 [ပြင်ဆင်ချက်] ကော်လံအမည်တွေကို stripping လုပ်ပြီး config တိုက်ရိုက်သတ်မှတ်ခြင်း
+                # Accessories ကို ဘယ်ကပ် (left) ထားပြီး ကျန်တဲ့ Out အပါအဝင် Number တွေအားလုံးကို Center အသေချာဆုံးကျစေရန်
                 config_summary = {}
                 for col in summary_table.columns:
                     if 'accessories' in col.lower():
                         config_summary[col] = st.column_config.Column(alignment="left")
                     else:
-                        # Number Column တွေဖြစ်လို့ default flow အတိုင်း အဆင်ပြေအောင် ထားရှိခြင်း
-                        config_summary[col] = st.column_config.NumberColumn(format="%d")
+                        config_summary[col] = st.column_config.Column(alignment="center")
                 
                 # DataFrame ပြသခြင်း
                 st.dataframe(
