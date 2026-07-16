@@ -154,7 +154,7 @@ with streamlit_analytics.track():
             st.write("") 
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Usage Summary</h3>", unsafe_allow_html=True)
             
-            numeric_cols = [col for col in ['Patch Cords (1M)', 'Patch Cords (1.5M)', 'Sleeve with 2 Steels', 'Customize (Pencil Kit)', 'Standard (Pencil Kit)'] if col in res_usage.columns]
+            numeric_cols = [col for col in ['PC(1M)', 'PC(1.5M)', 'Sleeve with 2 Steels', 'Customize PK', 'Standard PK'] if col in res_usage.columns]
             
             if numeric_cols:
                 summary_data = []
