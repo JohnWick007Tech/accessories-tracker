@@ -9,13 +9,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS ဖျောက်ရန် ကုဒ်များ (Toolbar နှင့် Branding)
+# 💡 Toolbar, Branding နှင့် တခြား အိုင်ကွန်အားလုံးကို ဖျောက်ရန် CSS
 st.markdown("""
     <style>
         [data-testid="stDataFrameToolbar"] { display: none !important; }
         footer { visibility: hidden !important; }
         #MainMenu { visibility: hidden !important; }
         header { visibility: hidden !important; }
+        div[data-testid="stDecoration"] { visibility: hidden !important; }
     </style>
 """, unsafe_allow_html=True)
 
