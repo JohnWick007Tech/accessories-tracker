@@ -156,9 +156,9 @@ with streamlit_analytics.track():
                 
                 config_summary = {
                     "Accessories": st.column_config.Column(alignment="left"),
-                    "Out": st.column_config.NumberColumn(alignment="center", format="%d"),
-                    "Total Usage": st.column_config.NumberColumn(alignment="center", format="%d"),
-                    "Return to PM": st.column_config.NumberColumn(alignment="center", format="%d")
+                    "Out": st.column_config.NumberColumn(alignment="center"),
+                    "Total Usage": st.column_config.NumberColumn(alignment="center"),
+                    "Return to PM": st.column_config.NumberColumn(alignment="center")
                 }
                 
                 st.dataframe(summary_table, use_container_width=True, hide_index=True, column_config=config_summary)
