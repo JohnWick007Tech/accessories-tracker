@@ -179,18 +179,15 @@ with streamlit_analytics.track():
                 
                 summary_table = pd.DataFrame(summary_data)
                 
-                # 💡 [အသေချာဆုံး ဖြေရှင်းချက်] ကော်လံနာမည်တွေ ဘာပဲဖြစ်ဖြစ်၊ ဒေတာတွေ ဘာပဲရှိရှိ
-                # ဇယားတစ်ခုလုံးမှာရှိတဲ့ အချက်အလက်အားလုံးကို String အဖြစ် ရာနှုန်းပြည့် အတင်းပြောင်းပစ်ပါတယ်
-                summary_table = summary_table.astype(str)
-                
-                # Column alignment configuration ကို တစ်ခုချင်းစီ သေသေချာချာ သတ်မှတ်ခြင်း
+                # 💡 ဇယားထဲက ကော်လံတစ်ခုချင်းစီကို အစဉ်လိုက် loop ပတ်ပြီး 
+                # ပထမဆုံးကော်လံ (Index 0) ကိုပဲ ဘယ်ကပ်ပြီး၊ ကျန်တဲ့ Out အပါအဝင် ကော်လံအားလုံးကို Center အသေညှိခြင်း
                 config_summary = {}
-                for col in summary_table.columns:
-                    # Accessories (ပထမကော်လံ) ကိုပဲ ဘယ်ကပ် (left) ထားမယ်
-                    if 'accessories' in col.lower():
+                for idx, col in enumerate(summary_table.columns):
+                    if idx == 0:
                         config_summary[col] = st.column_config.TextColumn(alignment="left")
-                    # Out အပါအဝင် ကျန်တဲ့ကော်လံအားလုံးကို ခြွင်းချက်မရှိ အလယ် (center) ညှိမယ်
                     else:
+                        # ဒေတာတွေကိုပါ Text အဖြစ်ပြောင်းပြီး Center တွန်းပို့ပါတယ်
+                        summary_table[col] = summary_table[col].astype(str)
                         config_summary[col] = st.column_config.TextColumn(alignment="center")
                 
                 # DataFrame ပြသခြင်း
