@@ -1,100 +1,63 @@
 import streamlit as st
 import pandas as pd
-import streamlit_analytics2 as streamlit_analytics  # 👈 ဝင်ကြည့်သူ ခြေရာခံစနစ်ကို ပြန်ထည့်သွင်းခြင်း
+import streamlit_analytics2 as streamlit_analytics
 
-# Page Configuration (ဖုန်းအတွက် ပိုမိုသေသပ်သော အခင်းအကျင်း)
+# Page Configuration
 st.set_page_config(
     page_title="Accessories Tracker", 
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# 📊 ဝင်ရောက်ကြည့်ရှုသူများကို စတင်ခြေရာခံခြင်း
 with streamlit_analytics.track():
 
-    # 🎨 ဇယားကို Screen အတင်းမညှစ်ဘဲ စာလုံးအရှည်အတိုင်း တစ်ကြောင်းတည်း (Center) ပို့ပေးမည့် CSS
-    st.html("""
-    <style>
-        /* ၁။ ဇယားတစ်ခုလုံးကို ဖုန်းပေါ်တွင် မညှပ်သွားစေဘဲ ဘေးတိုက်ရွှေ့ကြည့်နိုင်အောင် ပြုလုပ်ခြင်း */
-        div[data-testid="stTable"] {
-            overflow-x: auto !important;
-            display: block !important;
-            width: 100% !important;
-        }
-        
-        /* ၂။ ကော်လံများကို Screen အကျယ်အတိုင်း ညှစ်မထားဘဲ စာလုံးအလိုက် အလိုအလျောက် ဆွဲဆန့်စေခြင်း */
-        div[data-testid="stTable"] table {
-            table-layout: auto !important;
-            width: auto !important;
-            min-width: 100% !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
-            border-collapse: collapse !important;
-        }
-
-        /* ၃။ Headers (ခေါင်းစဉ်များ) ကို တစ်ကြောင်းတည်း အလယ်ပို့ခြင်း */
-        div[data-testid="stTable"] th,
-        div[data-testid="stTable"] th * {
-            text-align: center !important;
-            vertical-align: middle !important;
-            white-space: nowrap !important;
-            word-break: keep-all !important;
-        }
-        
-        div[data-testid="stTable"] th {
-            background-color: #f0f2f6 !important;
-            padding: 12px 20px !important;
-        }
-        
-        /* ၄။ Cells (ဒေတာများ) ကို တစ်ကြောင်းတည်း အလယ်ပို့ခြင်း */
-        div[data-testid="stTable"] td,
-        div[data-testid="stTable"] td * {
-            text-align: center !important;
-            vertical-align: middle !important;
-            white-space: nowrap !important;
-            word-break: keep-all !important;
-        }
-        
-        div[data-testid="stTable"] td {
-            padding: 10px 20px !important;
-        }
-    </style>
-    """)
-
-    # App Header
     st.markdown("<h3 style='text-align: center;'>📱 Eng Usage Checker</h3>", unsafe_allow_html=True)
 
-    # ⚠️ သင်၏ Google Sheet CSV Link
-    GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc/gviz/tq?tqx=out:csv"
+    # ⚠️ ပြင်ဆင်ချက် - တဘ် ၂ ခုလုံးအတွက် URL သတ်မှတ်ခြင်း
+    # Base URL (Link အဟောင်းအတိုင်း သုံးထားပါတယ်)
+    BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
+    
+    # ၁။ EngUsageTracker တဘ် (gid=0 ဟု ယူဆသည် သို့မဟုတ် gid အမှန်ပြောင်းပါ)
+    USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
+    
+    # ၂။ Out တဘ် (ကျေးဇူးပြု၍ YOUR_OUT_TAB_GID_HERE နေရာတွင် Out တဘ်၏ gid ဂဏန်းကို အစားထိုးပါ)
+    # 💡 ဥပမာ - gid=123456789
+    OUT_CSV_URL = f"{BASE_URL}/export?format=csv&gid=147444867"
 
     @st.cache_data(ttl=30)
-    def load_data():
-        df = pd.read_csv(GSHEET_CSV_URL)
-        if 'Date' in df.columns:
-            df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
-        return df
+    def load_all_data():
+        # Usage Data ဖတ်ခြင်း
+        df_usage = pd.read_csv(USAGE_CSV_URL)
+        if 'Date' in df_usage.columns:
+            df_usage['Date'] = pd.to_datetime(df_usage['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
+            
+        # Out Data ဖတ်ခြင်း
+        df_out = pd.read_csv(OUT_CSV_URL)
+        if 'Date' in df_out.columns:
+            df_out['Date'] = pd.to_datetime(df_out['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
+            
+        return df_usage, df_out
 
-    df = None
+    df_usage, df_out = None, None
     try:
-        df = load_data()
+        df_usage, df_out = load_all_data()
     except Exception as e:
-        st.error(f"❌ ချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
+        st.error(f"❌ Sheet ဒေတာချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
 
-    if df is not None:
+    if df_usage is not None and df_out is not None:
+        
+        # --- [၁] ကော်လံအမည်များ ညှိနှိုင်းခြင်း (Usage Sheet) ---
         sleeve_col_in_sheet = None
         possible_sleeve_names = ['Sleeves with 2 steels', 'Sleeve with 2 Steels', 'Sleeves with 2 Steels', 'Sleeve with 2 steels']
-        
-        for col in df.columns:
+        for col in df_usage.columns:
             if col.strip() in possible_sleeve_names:
                 sleeve_col_in_sheet = col
                 break
-                
         if not sleeve_col_in_sheet:
-            for col in df.columns:
+            for col in df_usage.columns:
                 if 'sleeve' in col.lower() and '2' in col:
                     sleeve_col_in_sheet = col
                     break
-                    
         if not sleeve_col_in_sheet:
             sleeve_col_in_sheet = 'Sleeve with 2 Steels'
 
@@ -109,70 +72,95 @@ with streamlit_analytics.track():
             'Standard (Pencil Kit , white)': 'Standard (Pencil Kit)'
         }
         
-        available_cols = [col for col in columns_mapping.keys() if col in df.columns]
-        filtered_df = df[available_cols].copy()
-        filtered_df = filtered_df.rename(columns={col: columns_mapping[col] for col in available_cols})
+        available_cols = [col for col in columns_mapping.keys() if col in df_usage.columns]
+        filtered_usage = df_usage[available_cols].copy()
+        filtered_usage = filtered_usage.rename(columns={col: columns_mapping[col] for col in available_cols})
 
+        # --- [၂] ကော်လံအမည်များ ညှိနှိုင်းခြင်း (Out Sheet) ---
+        # Out sheet ထဲမှာလည်း အမည်တွေတူအောင် Mapping လုပ်ပါတယ်
+        available_out_cols = [col for col in columns_mapping.keys() if col in df_out.columns]
+        filtered_out = df_out[available_out_cols].copy()
+        filtered_out = filtered_out.rename(columns={col: columns_mapping[col] for col in available_out_cols})
+
+        # --- Dropdowns ဆောက်ခြင်း ---
         col1, col2 = st.columns(2)
-        
         with col1:
-            engineers_list = sorted(filtered_df['Engineer Name'].dropna().unique())
+            engineers_list = sorted(filtered_usage['Engineer Name'].dropna().unique())
             selected_engineer = st.selectbox(
                 "♻️ Filter by Engineer Name:",
                 options=["All Engineers"] + list(engineers_list)
             )
             
         with col2:
-            dates_list = sorted(filtered_df['Date'].dropna().unique(), reverse=True)
+            dates_list = sorted(filtered_usage['Date'].dropna().unique(), reverse=True)
             selected_date = st.selectbox(
                 "📅 Filter by Date:",
                 options=["All Dates"] + list(dates_list)
             )
 
-        result_df = filtered_df.copy()
+        # --- ဒေတာ စစ်ထုတ်ခြင်း (Filter) ---
+        res_usage = filtered_usage.copy()
+        res_out = filtered_out.copy()
         
         if selected_engineer != "All Engineers":
-            result_df = result_df[result_df['Engineer Name'] == selected_engineer]
+            res_usage = res_usage[res_usage['Engineer Name'] == selected_engineer]
+            res_out = res_out[res_out['Engineer Name'] == selected_engineer]
             
         if selected_date != "All Dates":
-            result_df = result_df[result_df['Date'] == selected_date]
+            res_usage = res_usage[res_usage['Date'] == selected_date]
+            res_out = res_out[res_out['Date'] == selected_date]
 
         st.divider()
 
-        if not result_df.empty:
+        # --- [၃] Engineers R1-Link Table ပြသခြင်း ---
+        if not res_usage.empty:
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
             
-            formatted_df = result_df.copy()
+            formatted_df = res_usage.copy()
             for col in formatted_df.select_dtypes(include='number').columns:
-                formatted_df[col] = formatted_df[col].apply(lambda x: f"{int(x)}" if x % 1 == 0 else f"{x:.1f}")
+                formatted_df[col] = formatted_df[col].apply(lambda x: int(x) if x % 1 == 0 else x)
                 
-            st.table(formatted_df)
+            st.dataframe(formatted_df, use_container_width=True, hide_index=True)
             
-            total_rows = len(result_df)
+            total_rows = len(res_usage)
             st.markdown(f"""
             <div style='background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold; border: 1px solid #c3e6cb; margin-top: 10px; margin-bottom: 25px;'>
                 ✅ Total Upload = {total_rows}
             </div>
             """, unsafe_allow_html=True)
             
+            # --- [၄] Total Used Summary & Out Summary ပေါင်းစည်းပြသခြင်း ---
             st.write("") 
-            st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used Summary</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used & Out Summary</h3>", unsafe_allow_html=True)
             
-            numeric_cols = result_df.select_dtypes(include='number').columns
+            numeric_cols = res_usage.select_dtypes(include='number').columns
             
             if not numeric_cols.empty:
-                summary_list = []
+                summary_data = []
                 for col in numeric_cols:
-                    total_val = result_df[col].sum()
-                    if total_val % 1 == 0:
-                        formatted_val = f"{int(total_val)}"
-                    else:
-                        formatted_val = f"{total_val:.1f}"
+                    # Usage Sum
+                    total_val = res_usage[col].sum()
+                    formatted_val = int(total_val) if total_val % 1 == 0 else round(total_val, 1)
+                    
+                    # Out Sum (စစ်ထုတ်ထားတဲ့ Out ဒေတာထဲက သက်ဆိုင်ရာပစ္စည်း စုစုပေါင်းကို ရှာခြင်း)
+                    out_val = 0
+                    if col in res_out.columns:
+                        out_val = res_out[col].sum()
+                    formatted_out = int(out_val) if out_val % 1 == 0 else round(out_val, 1)
                         
-                    summary_list.append({'Accessories': col, 'Total Usage': formatted_val})
+                    summary_data.append({
+                        'Accessories': col, 
+                        'Total Usage': formatted_val,
+                        'Out': formatted_out  # 👈 ညာဘက်ဘေးမှာ Out ကော်လံအသစ် ထည့်သွင်းခြင်း
+                    })
                 
-                summary_table = pd.DataFrame(summary_list)
-                st.table(summary_table)
+                summary_table = pd.DataFrame(summary_data)
+                
+                st.dataframe(
+                    summary_table, 
+                    use_container_width=True, 
+                    hide_index=True
+                )
                 
         else:
             st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
