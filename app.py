@@ -183,7 +183,7 @@ with streamlit_analytics.track():
                 # Accessories ကို ဘယ်ကပ် (left) ထားပြီး ကျန်တဲ့ Out အပါအဝင် Number တွေအားလုံးကို Center အသေချာဆုံးကျစေရန်
                 config_summary = {}
                 for col in summary_table.columns:
-                    if 'accessories' in col.lower():
+                    if 'Accessories' in col.lower():
                         config_summary[col] = st.column_config.Column(alignment="left")
                     else:
                         config_summary[col] = st.column_config.Column(alignment="center")
