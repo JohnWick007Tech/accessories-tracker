@@ -13,26 +13,6 @@ with streamlit_analytics.track():
 
     st.markdown("<h3 style='text-align: center;'>📱 Eng Usage Checker</h3>", unsafe_allow_html=True)
 
-    # 💡 [ဒီတစ်ခါ အပိုင်ဆုံး ဖြေရှင်းချက်] st.dataframe ရဲ့ ခေါင်းစဉ် (Header Title) စာသားတွေကိုပါ Center အသေကျစေမယ့် CSS Selector 
-    st.markdown("""
-        <style>
-            /* Streamlit Dataframe ရဲ့ Header Cells ထဲက စာသားတွေကို Center ညှိခြင်း */
-            div[data-testid="stDataFrame"] iframe,
-            div[data-testid="stDataFrame"] table th,
-            div[data-testid="stDataFrame"] div[role="columnheader"] p,
-            div[data-testid="stDataFrame"] div[role="columnheader"] {
-                text-align: center !important;
-                justify-content: center !important;
-                align-items: center !important;
-            }
-            
-            /* Glide Data Grid Header Text Alignment ကိုပါ သက်ရောက်စေရန် */
-            .glideDataGrid-container div {
-                text-align: center !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
     # ⚠️ Google Sheet URLs
     BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
@@ -133,9 +113,9 @@ with streamlit_analytics.track():
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
             
             formatted_df = res_usage.copy()
-            # ကိန်းဂဏန်းများကို စာသားအဖြစ်ပြောင်းလဲပေးခြင်း
+            # ကိန်းဂဏန်းများကို သေသပ်အောင် ပြင်ဆင်ခြင်း
             for col in formatted_df.select_dtypes(include='number').columns:
-                formatted_df[col] = formatted_df[col].apply(lambda x: str(int(x)) if x % 1 == 0 else str(round(x, 1)))
+                formatted_df[col] = formatted_df[col].apply(lambda x: int(x) if x % 1 == 0 else x)
             
             # TKT/POI Duplicate ရှာဖွေပြီး အရောင်ခြယ်ရန် Function
             def highlight_duplicates(column):
@@ -144,8 +124,17 @@ with streamlit_analytics.track():
 
             styled_df = formatted_df.style.apply(highlight_duplicates, subset=['TKT/POI'])
             
-            # TextColumn အသုံးပြုပြီး Alignment ညှိခြင်း
-            config_df = {col: st.column_config.TextColumn(alignment="center") for col in formatted_df.columns}
+            # 💡 [ပြင်ဆင်ချက်] အနီရောင်ကွက်ထဲက ကော်လံတွေကို ဘယ်ကပ် (left) ထားပြီး၊ ပစ္စည်းအရေအတွက်တွေကိုပဲ အလယ် (center) ညှိခြင်း
+            config_df = {
+                'Date': st.column_config.Column(alignment="left"),
+                'Engineer Name': st.column_config.Column(alignment="left"),
+                'TKT/POI': st.column_config.Column(alignment="left"),
+                'Patch Cords (1M)': st.column_config.Column(alignment="center"),
+                'Patch Cords (1.5M)': st.column_config.Column(alignment="center"),
+                'Sleeve with 2 Steels': st.column_config.Column(alignment="center"),
+                'Customize (Pencil Kit)': st.column_config.Column(alignment="center"),
+                'Standard (Pencil Kit)': st.column_config.Column(alignment="center")
+            }
                 
             st.dataframe(
                 styled_df, 
@@ -183,13 +172,20 @@ with streamlit_analytics.track():
                         
                     summary_data.append({
                         'Accessories': col, 
-                        'Out': str(formatted_out),
-                        'Total Usage': str(formatted_val),
-                        'Return to PM': str(formatted_return)
+                        'Out': formatted_out,
+                        'Total Usage': formatted_val,
+                        'Return to PM': formatted_return
                     })
                 
                 summary_table = pd.DataFrame(summary_data)
-                config_summary = {col: st.column_config.TextColumn(alignment="center") for col in summary_table.columns}
+                
+                # 💡 [ပြင်ဆင်ချက်] Accessories ကို ဘယ်ကပ် (left) ထားပြီး၊ Out/Usage/Return ကိန်းဂဏန်းတွေကိုပဲ အလယ် (center) ညှိခြင်း
+                config_summary = {
+                    'Accessories': st.column_config.Column(alignment="left"),
+                    'Out': st.column_config.Column(alignment="center"),
+                    'Total Usage': st.column_config.Column(alignment="center"),
+                    'Return to PM': st.column_config.Column(alignment="center")
+                }
                 
                 st.dataframe(
                     summary_table, 
