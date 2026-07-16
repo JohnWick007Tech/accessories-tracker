@@ -119,14 +119,20 @@ with streamlit_analytics.track():
             # TKT/POI Duplicate ရှာဖွေပြီး အရောင်ခြယ်ရန် Function
             def highlight_duplicates(column):
                 is_dup = column.duplicated(keep=False) & column.notna() & (column != '')
-                # Duplicate ဖြစ်လျှင် အနီရောင်ခြယ်ပြီး ကျန်တာကို ဘာမှမလုပ်ပါ (Alignment ကို သက်သက်လုပ်မည်)
                 return ['background-color: #f8d7da; color: #721c24; font-weight: bold;' if v else '' for v in is_dup]
 
-            # 💡 ပြင်ဆင်ချက် - Table တစ်ခုလုံးကို Center Align လုပ်ပြီးမှ Duplicate အတွက်ပါ အရောင်ထပ်အုပ်ခြင်း
-            styled_df = formatted_df.style.set_properties(**{'text-align': 'center'})\
-                                          .apply(highlight_duplicates, subset=['TKT/POI'])
+            # Duplicate အရောင်ခြယ်စနစ်ကို သီးသန့် ယူထားခြင်း
+            styled_df = formatted_df.style.apply(highlight_duplicates, subset=['TKT/POI'])
+            
+            # 💡 ပြင်ဆင်ချက် - Column Config သုံးပြီး ကော်လံအားလုံးကို Center Align လုပ်ခြင်း
+            config_df = {col: st.column_config.Column(alignment="center") for col in formatted_df.columns}
                 
-            st.dataframe(styled_df, use_container_width=True, hide_index=True)
+            st.dataframe(
+                styled_df, 
+                use_container_width=True, 
+                hide_index=True,
+                column_config=config_df # 👈 ဤနေရာတွင် configuration ထည့်သွင်းပါသည်
+            )
             
             total_rows = len(res_usage)
             st.markdown(f"""
@@ -164,13 +170,14 @@ with streamlit_analytics.track():
                 
                 summary_table = pd.DataFrame(summary_data)
                 
-                # 💡 ပြင်ဆင်ချက် - Summary Table ထဲက စာသားနဲ့ နံပါတ်တွေအားလုံးကို Center Align ပြုလုပ်ခြင်း
-                styled_summary = summary_table.style.set_properties(**{'text-align': 'center'})
+                # 💡 ပြင်ဆင်ချက် - Summary Table ကော်လံအားလုံးအတွက်ပါ Center Align Config ပြုလုပ်ခြင်း
+                config_summary = {col: st.column_config.Column(alignment="center") for col in summary_table.columns}
                 
                 st.dataframe(
-                    styled_summary, 
+                    summary_table, 
                     use_container_width=True, 
-                    hide_index=True
+                    hide_index=True,
+                    column_config=config_summary # 👈 ဤနေရာတွင် configuration ထည့်သွင်းပါသည်
                 )
                 
         else:
