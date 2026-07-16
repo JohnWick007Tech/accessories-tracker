@@ -19,7 +19,7 @@ with streamlit_analytics.track():
     # ၁။ EngUsageTracker တဘ် (gid=0)
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
     
-    # ၂။ Out တဘ် (ထည့်သွင်းပေးထားသော gid ဖြစ်ပါသည်)
+    # ၂။ Out တဘ် (gid=147444867)
     OUT_CSV_URL = f"{BASE_URL}/export?format=csv&gid=147444867"
 
     @st.cache_data(ttl=30)
@@ -40,11 +40,11 @@ with streamlit_analytics.track():
     try:
         df_usage, df_out = load_all_data()
     except Exception as e:
-        st.error(f"❌ Sheet ဒေတာချက်ဆက်မှု အဆင်မပြေပါ- {e}")
+        st.error(f"❌ Sheet ဒေတာချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
 
     if df_usage is not None and df_out is not None:
         
-        # --- [၁] ကော်လံအမည်များ ညှိနှိုင်းခြင်း (Sleeve Column အတွက် Dynamic ရှာဖွေခြင်း) ---
+        # --- [၁] Sleeve Column အမည်ကို တူညီအောင် ညှိနှိုင်းခြင်း ---
         sleeve_col_in_sheet = None
         possible_sleeve_names = ['Sleeves with 2 steels', 'Sleeve with 2 Steels', 'Sleeves with 2 Steels', 'Sleeve with 2 steels']
         for col in df_usage.columns:
@@ -59,21 +59,11 @@ with streamlit_analytics.track():
         if not sleeve_col_in_sheet:
             sleeve_col_in_sheet = 'Sleeve with 2 Steels'
 
-        # စံသတ်မှတ်ထားသော Column Name များ
+        # စံသတ်မှတ်ထားသော Column Name Maps
         columns_mapping = {
             'Date': 'Date',
             'Engineer Name': 'Engineer Name',
             'TKT/POI/CPE': 'TKT/POI',                        
             'Patch Cords(SC/APC) 1M': 'Patch Cords (1M)',          
             'Patch Cords(SC/APC) 1.5M': 'Patch Cords (1.5M)',
-            sleeve_col_in_sheet: 'Sleeve with 2 Steels',
-            'Customize (Pencil Kit , white)': 'Customize (Pencil Kit)',
-            'Standard (Pencil Kit , white)': 'Standard (Pencil Kit)'
-        }
-        
-        # Usage Sheet ကို Filter ဖြတ်ပြီး Name ပြောင်းခြင်း
-        available_cols = [col for col in columns_mapping.keys() if col in df_usage.columns]
-        filtered_usage = df_usage[available_cols].copy()
-        filtered_usage = filtered_usage.rename(columns={col: columns_mapping[col] for col in available_cols})
-
-        # --- [၂] ကော်လံအမည်များ ညှိနှိုင်းခြင်း (Out Sheet) ---
+            sleeve_col_
