@@ -179,22 +179,21 @@ with streamlit_analytics.track():
                 
                 summary_table = pd.DataFrame(summary_data)
                 
-                # 💡 [ပြင်ဆင်ချက်] ကော်လံအမည်တွေကို stripping လုပ်ပြီး config တိုက်ရိုက်သတ်မှတ်ခြင်း
-                # Accessories ကို ဘယ်ကပ် (left) ထားပြီး ကျန်တဲ့ Out အပါအဝင် Number တွေအားလုံးကို Center အသေချာဆုံးကျစေရန်
-                config_summary = {}
-                for col in summary_table.columns:
-                    if 'accessories' not in col.lower():
-                        summary_table[col] = summary_table[col].astype(str)
+                # 💡 [အသေချာဆုံး ဖြေရှင်းချက်] ကော်လံနာမည်တွေ ဘာပဲဖြစ်ဖြစ်၊ ဒေတာတွေ ဘာပဲရှိရှိ
+                # ဇယားတစ်ခုလုံးမှာရှိတဲ့ အချက်အလက်အားလုံးကို String အဖြစ် ရာနှုန်းပြည့် အတင်းပြောင်းပစ်ပါတယ်
+                summary_table = summary_table.astype(str)
                 
-                # Accessories ကို ဘယ်ကပ်ထားပြီး ကျန်တဲ့ Out, Total Usage, Return to PM အားလုံးကို TextColumn ဖြင့် Center အသေညှိခြင်း
+                # Column alignment configuration ကို တစ်ခုချင်းစီ သေသေချာချာ သတ်မှတ်ခြင်း
                 config_summary = {}
                 for col in summary_table.columns:
+                    # Accessories (ပထမကော်လံ) ကိုပဲ ဘယ်ကပ် (left) ထားမယ်
                     if 'accessories' in col.lower():
                         config_summary[col] = st.column_config.TextColumn(alignment="left")
+                    # Out အပါအဝင် ကျန်တဲ့ကော်လံအားလုံးကို ခြွင်းချက်မရှိ အလယ် (center) ညှိမယ်
                     else:
                         config_summary[col] = st.column_config.TextColumn(alignment="center")
                 
-                # DataFrame ကို ပြသခြင်း
+                # DataFrame ပြသခြင်း
                 st.dataframe(
                     summary_table, 
                     use_container_width=True, 
