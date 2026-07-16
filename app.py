@@ -115,8 +115,18 @@ with streamlit_analytics.track():
             formatted_df = res_usage.copy()
             for col in formatted_df.select_dtypes(include='number').columns:
                 formatted_df[col] = formatted_df[col].apply(lambda x: int(x) if x % 1 == 0 else x)
+            
+            # 💡 ပြင်ဆင်ချက် - TKT/POI ကော်လံထဲက Duplicate ဖြစ်နေတာတွေကို အနီရောင်ခြယ်ရန် Function
+            def highlight_duplicates(column):
+                # စာသားမဟုတ်တာ ဒါမှမဟုတ် ကွက်လပ်ဖြစ်နေတာတွေကို ချန်လှပ်ပြီး duplicate ရှာရန်
+                is_dup = column.duplicated(keep=False) & column.notna() & (column != '')
+                return ['background-color: #f8d7da; color: #721c24; font-weight: bold;' if v else '' for v in is_dup]
+
+            # Styler သုံးပြီး TKT/POI ကော်လံတစ်ခုတည်းကိုပဲ အရောင်စစ်ဆေးပြီး ခြယ်ခိုင်းခြင်း
+            styled_df = formatted_df.style.apply(highlight_duplicates, subset=['TKT/POI'])
                 
-            st.dataframe(formatted_df, use_container_width=True, hide_index=True)
+            # st.dataframe ထဲမှာ formatted_df အစား styled_df ကို ထည့်သွင်းပြသပါသည်
+            st.dataframe(styled_df, use_container_width=True, hide_index=True)
             
             total_rows = len(res_usage)
             st.markdown(f"""
@@ -125,7 +135,7 @@ with streamlit_analytics.track():
             </div>
             """, unsafe_allow_html=True)
             
-            # --- [၄] Total Used & Out & Return to PM Summary ပေါင်းစည်းပြသခြင်း ---
+            # --- [၄] Total Used & Out & Return to PM Summary ပြသခြင်း ---
             st.write("") 
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used & Out Summary</h3>", unsafe_allow_html=True)
             
@@ -134,26 +144,22 @@ with streamlit_analytics.track():
             if numeric_cols:
                 summary_data = []
                 for col in numeric_cols:
-                    # Usage Sum တွက်ချက်ခြင်း
                     total_val = pd.to_numeric(res_usage[col], errors='coerce').sum()
                     formatted_val = int(total_val) if total_val % 1 == 0 else round(total_val, 1)
                     
-                    # Out Sum တွက်ချက်ခြင်း
                     out_val = 0
                     if col in res_out.columns:
                         out_val = pd.to_numeric(res_out[col], errors='coerce').sum()
                     formatted_out = int(out_val) if out_val % 1 == 0 else round(out_val, 1)
                     
-                    # 💡 ပြင်ဆင်ချက် - Return to PM (Out - Total Usage) ကို တွက်ချက်ခြင်း
                     return_val = out_val - total_val
                     formatted_return = int(return_val) if return_val % 1 == 0 else round(return_val, 1)
                         
-                    # ဇယားကော်လံများ စီစဉ်မှု- Accessories -> Out -> Total Usage -> Return to PM
                     summary_data.append({
                         'Accessories': col, 
                         'Out': formatted_out,
                         'Total Usage': formatted_val,
-                        'Return to PM': formatted_return  # 👈 ညာဘက်ဘေးဆုံး ကော်လံအသစ်
+                        'Return to PM': formatted_return
                     })
                 
                 summary_table = pd.DataFrame(summary_data)
