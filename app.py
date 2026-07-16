@@ -1,12 +1,17 @@
 import streamlit as st
 import pandas as pd
+import streamlit_analytics2 as streamlit_analytics  # 👈 Analytics tracker ကို import လုပ်ပါ
 
-# Page Configuration (ဖုန်းအတွက် ပိုမိုသေသပ်သော အခင်းအကျင်း)
+# Page Configuration (ဖုန်းအတွက် ပိုမိုသေသပ်သော အခင်းအကျင်း - ၎င်းသည် အမြဲတမ်း ပထမဆုံး Streamlit command ဖြစ်ရပါမည်)
 st.set_page_config(
     page_title="Accessories Tracker", 
     layout="centered",
     initial_sidebar_state="collapsed"
 )
+
+# 📊 ဝင်ရောက်ကြည့်ရှုသူများကို စတင်ခြေရာခံခြင်း (ကျန်ရှိသော ကုဒ်အားလုံးကို ၎င်းအောက်တွင် indented လုပ်ပြီး ထည့်ပေးရပါမည်)
+# လုံခြုံရေးအတွက် စကားဝှက် ခံချင်ပါက password="သင်ပေးချင်သောစကားဝှက်" ထည့်နိုင်ပါသည် ဥပမာ - track(password="1234")
+with streamlit_analytics.track():
 
 # 🎨 ဇယားကို Screen အတင်းမညှစ်ဘဲ စာလုံးအရှည်အတိုင်း တစ်ကြောင်းတည်း (Center) ပို့ပေးမည့် CSS အသစ်
 st.html("""
