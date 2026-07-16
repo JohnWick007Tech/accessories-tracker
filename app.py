@@ -177,11 +177,11 @@ with streamlit_analytics.track():
                         'Return PM': formatted_return
                     })
                 
-               summary_table = pd.DataFrame(summary_data)
+                summary_table = pd.DataFrame(summary_data)
                 
-                # 💡 [ဒီတစ်ခါ တကယ်ရမယ့်ပြင်ဆင်ချက်] 
-                # Out အပါအဝင် ကိန်းဂဏန်းကော်လံအားလုံးကို စာသား (String) အဖြစ် ပြောင်းလဲပစ်ခြင်း
-                # ဒါမှ Streamlit က ညာဘက်ကို ဇွတ်မတွန်းတော့ဘဲ Center configuration ကို လက်ခံမှာဖြစ်ပါတယ်
+                # 💡 [ပြင်ဆင်ချက်] ကော်လံအမည်တွေကို stripping လုပ်ပြီး config တိုက်ရိုက်သတ်မှတ်ခြင်း
+                # Accessories ကို ဘယ်ကပ် (left) ထားပြီး ကျန်တဲ့ Out အပါအဝင် Number တွေအားလုံးကို Center အသေချာဆုံးကျစေရန်
+                config_summary = {}
                 for col in summary_table.columns:
                     if 'accessories' not in col.lower():
                         summary_table[col] = summary_table[col].astype(str)
