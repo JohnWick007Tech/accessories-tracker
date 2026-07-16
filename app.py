@@ -174,7 +174,7 @@ with streamlit_analytics.track():
                         'Accessories': col, 
                         'Out': formatted_out,
                         'Total Usage': formatted_val,
-                        'Return to PM': formatted_return
+                        'Return PM': formatted_return
                     })
                 
                 summary_table = pd.DataFrame(summary_data)
