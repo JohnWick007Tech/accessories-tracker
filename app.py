@@ -13,6 +13,20 @@ with streamlit_analytics.track():
 
     st.markdown("<h3 style='text-align: center;'>📱 Eng Usage Checker</h3>", unsafe_allow_html=True)
 
+    # 💡 မျှားပြထားတဲ့ Table Header (Title) တန်းတွေကိုပါ Center ရောက်အောင် CSS ထည့်သွင်းခြင်း
+    st.markdown("""
+        <style>
+            /* Table Header (Title) များကို Center ညှိခြင်း */
+            .stDataFrame th {
+                text-align: center !important;
+            }
+            /* Table Cells (Data) များကို Center ညှိခြင်း */
+            .stDataFrame td {
+                text-align: center !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
     # ⚠️ Google Sheet URLs
     BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
@@ -121,17 +135,17 @@ with streamlit_analytics.track():
                 is_dup = column.duplicated(keep=False) & column.notna() & (column != '')
                 return ['background-color: #f8d7da; color: #721c24; font-weight: bold;' if v else '' for v in is_dup]
 
-            # Duplicate အရောင်ခြယ်စနစ်ကို သီးသန့် ယူထားခြင်း
+            # Duplicate အရောင်ခြယ်ခြင်းကိုသာ ယူထားသည် (Alignment ကို CSS ဖြင့် လုပ်ဆောင်ထားပါသည်)
             styled_df = formatted_df.style.apply(highlight_duplicates, subset=['TKT/POI'])
             
-            # 💡 ပြင်ဆင်ချက် - Column Config သုံးပြီး ကော်လံအားလုံးကို Center Align လုပ်ခြင်း
+            # Column Config ကို Center ထားပြီး CSS နှင့် ပေါင်းစပ်အသုံးပြုခြင်း
             config_df = {col: st.column_config.Column(alignment="center") for col in formatted_df.columns}
                 
             st.dataframe(
                 styled_df, 
                 use_container_width=True, 
                 hide_index=True,
-                column_config=config_df # 👈 ဤနေရာတွင် configuration ထည့်သွင်းပါသည်
+                column_config=config_df
             )
             
             total_rows = len(res_usage)
@@ -169,15 +183,13 @@ with streamlit_analytics.track():
                     })
                 
                 summary_table = pd.DataFrame(summary_data)
-                
-                # 💡 ပြင်ဆင်ချက် - Summary Table ကော်လံအားလုံးအတွက်ပါ Center Align Config ပြုလုပ်ခြင်း
                 config_summary = {col: st.column_config.Column(alignment="center") for col in summary_table.columns}
                 
                 st.dataframe(
                     summary_table, 
                     use_container_width=True, 
                     hide_index=True,
-                    column_config=config_summary # 👈 ဤနေရာတွင် configuration ထည့်သွင်းပါသည်
+                    column_config=config_summary
                 )
                 
         else:
