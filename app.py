@@ -116,16 +116,16 @@ with streamlit_analytics.track():
             for col in formatted_df.select_dtypes(include='number').columns:
                 formatted_df[col] = formatted_df[col].apply(lambda x: int(x) if x % 1 == 0 else x)
             
-            # 💡 ပြင်ဆင်ချက် - TKT/POI ကော်လံထဲက Duplicate ဖြစ်နေတာတွေကို အနီရောင်ခြယ်ရန် Function
+            # TKT/POI Duplicate ရှာဖွေပြီး အရောင်ခြယ်ရန် Function
             def highlight_duplicates(column):
-                # စာသားမဟုတ်တာ ဒါမှမဟုတ် ကွက်လပ်ဖြစ်နေတာတွေကို ချန်လှပ်ပြီး duplicate ရှာရန်
                 is_dup = column.duplicated(keep=False) & column.notna() & (column != '')
+                # Duplicate ဖြစ်လျှင် အနီရောင်ခြယ်ပြီး ကျန်တာကို ဘာမှမလုပ်ပါ (Alignment ကို သက်သက်လုပ်မည်)
                 return ['background-color: #f8d7da; color: #721c24; font-weight: bold;' if v else '' for v in is_dup]
 
-            # Styler သုံးပြီး TKT/POI ကော်လံတစ်ခုတည်းကိုပဲ အရောင်စစ်ဆေးပြီး ခြယ်ခိုင်းခြင်း
-            styled_df = formatted_df.style.apply(highlight_duplicates, subset=['TKT/POI'])
+            # 💡 ပြင်ဆင်ချက် - Table တစ်ခုလုံးကို Center Align လုပ်ပြီးမှ Duplicate အတွက်ပါ အရောင်ထပ်အုပ်ခြင်း
+            styled_df = formatted_df.style.set_properties(**{'text-align': 'center'})\
+                                          .apply(highlight_duplicates, subset=['TKT/POI'])
                 
-            # st.dataframe ထဲမှာ formatted_df အစား styled_df ကို ထည့်သွင်းပြသပါသည်
             st.dataframe(styled_df, use_container_width=True, hide_index=True)
             
             total_rows = len(res_usage)
@@ -137,7 +137,7 @@ with streamlit_analytics.track():
             
             # --- [၄] Total Used & Out & Return to PM Summary ပြသခြင်း ---
             st.write("") 
-            st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Result & Summary</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used & Out Summary</h3>", unsafe_allow_html=True)
             
             numeric_cols = [col for col in ['Patch Cords (1M)', 'Patch Cords (1.5M)', 'Sleeve with 2 Steels', 'Customize (Pencil Kit)', 'Standard (Pencil Kit)'] if col in res_usage.columns]
             
@@ -164,8 +164,11 @@ with streamlit_analytics.track():
                 
                 summary_table = pd.DataFrame(summary_data)
                 
+                # 💡 ပြင်ဆင်ချက် - Summary Table ထဲက စာသားနဲ့ နံပါတ်တွေအားလုံးကို Center Align ပြုလုပ်ခြင်း
+                styled_summary = summary_table.style.set_properties(**{'text-align': 'center'})
+                
                 st.dataframe(
-                    summary_table, 
+                    styled_summary, 
                     use_container_width=True, 
                     hide_index=True
                 )
