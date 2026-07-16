@@ -9,23 +9,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 💡 Toolbar, Branding နှင့် ညာဘက်အောက်ထောင့်က အိုင်ကွန်များအားလုံးကို ဖျောက်ရန် အပြည့်အစုံ
+# CSS ဖျောက်ရန် ကုဒ်များ (Toolbar နှင့် Branding)
 st.markdown("""
     <style>
-        /* Toolbar များကို ဖျောက်ရန် */
         [data-testid="stDataFrameToolbar"] { display: none !important; }
-        
-        /* Branding နှင့် Navigation များကို ဖျောက်ရန် */
-        #MainMenu, footer, header { visibility: hidden !important; height: 0 !important; }
-        
-        /* ညာဘက်အောက်ထောင့်က အိုင်ကွန်ကို ဖျောက်ခြင်း */
-        div[data-testid="stAppDeployButton"], 
-        div[data-testid="stDecoration"], 
-        div[data-testid="stToolbar"], 
-        .stDeployButton { 
-            visibility: hidden !important; 
-            display: none !important; 
-        }
+        footer { visibility: hidden !important; }
+        #MainMenu { visibility: hidden !important; }
+        header { visibility: hidden !important; }
     </style>
 """, unsafe_allow_html=True)
 
