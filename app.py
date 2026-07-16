@@ -20,12 +20,10 @@ with streamlit_analytics.track():
 
     @st.cache_data(ttl=30)
     def load_all_data():
-        # Usage Data ဖတ်ခြင်း
         df_usage = pd.read_csv(USAGE_CSV_URL)
         if 'Date' in df_usage.columns:
             df_usage['Date'] = pd.to_datetime(df_usage['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
             
-        # Out Data ဖတ်ခြင်း
         df_out = pd.read_csv(OUT_CSV_URL)
         if 'Date' in df_out.columns:
             df_out['Date'] = pd.to_datetime(df_out['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
@@ -58,7 +56,7 @@ with streamlit_analytics.track():
         if not sleeve_col_in_sheet:
             sleeve_col_in_sheet = 'Sleeve with 2 Steels'
 
-        # စံသတ်မှတ်ထားသော Column Name Maps (Syntax သေချာအောင် ပြန်ပိတ်ထားပါသည်)
+        # စံသတ်မှတ်ထားသော Column Name Maps
         columns_mapping = {
             'Date': 'Date',
             'Engineer Name': 'Engineer Name',
@@ -70,12 +68,12 @@ with streamlit_analytics.track():
             'Standard (Pencil Kit , white)': 'Standard (Pencil Kit)'
         }
         
-        # --- [၂] Usage Sheet ကို Filter ဖြတ်ပြီး နာမည်ပြောင်းလဲခြင်း ---
+        # Usage Sheet ကို Filter ဖြတ်ပြီး နာမည်ပြောင်းလဲခြင်း
         available_cols = [col for col in columns_mapping.keys() if col in df_usage.columns]
         filtered_usage = df_usage[available_cols].copy()
         filtered_usage = filtered_usage.rename(columns={col: columns_mapping[col] for col in available_cols})
 
-        # --- [၃] Out Sheet ကို နာမည်ညှိနှိုင်းခြင်း (Timestamp တိုးထားသော်လည်း အလုပ်လုပ်ပါမည်) ---
+        # Out Sheet ကို နာမည်ညှိနှိုင်းခြင်း
         available_out_cols = [col for col in columns_mapping.keys() if col in df_out.columns]
         filtered_out = df_out[available_out_cols].copy()
         filtered_out = filtered_out.rename(columns={col: columns_mapping[col] for col in available_out_cols})
@@ -110,7 +108,7 @@ with streamlit_analytics.track():
 
         st.divider()
 
-        # --- [၄] Engineers R1-Link Table ပြသခြင်း ---
+        # --- [၃] Engineers R1-Link Table ပြသခြင်း ---
         if not res_usage.empty:
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
             
@@ -127,11 +125,10 @@ with streamlit_analytics.track():
             </div>
             """, unsafe_allow_html=True)
             
-            # --- [၅] Total Used & Out Summary ပေါင်းစည်းပြသခြင်း ---
+            # --- [၄] Total Used & Out Summary ပေါင်းစည်းပြသခြင်း ---
             st.write("") 
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used & Out Summary</h3>", unsafe_allow_html=True)
             
-            # ကိန်းဂဏန်းပါဝင်သော ကော်လံများကို ရွေးထုတ်ခြင်း
             numeric_cols = [col for col in ['Patch Cords (1M)', 'Patch Cords (1.5M)', 'Sleeve with 2 Steels', 'Customize (Pencil Kit)', 'Standard (Pencil Kit)'] if col in res_usage.columns]
             
             if numeric_cols:
@@ -147,10 +144,11 @@ with streamlit_analytics.track():
                         out_val = pd.to_numeric(res_out[col], errors='coerce').sum()
                     formatted_out = int(out_val) if out_val % 1 == 0 else round(out_val, 1)
                         
+                    # 💡 ပြင်ဆင်ချက် - ကော်လံအစီအစဉ်ကို 'Accessories' -> 'Out' -> 'Total Usage' သို့ ပြောင်းလဲထားပါသည်
                     summary_data.append({
                         'Accessories': col, 
-                        'Total Usage': formatted_val,
-                        'Out': formatted_out
+                        'Out': formatted_out,
+                        'Total Usage': formatted_val
                     })
                 
                 summary_table = pd.DataFrame(summary_data)
