@@ -177,25 +177,39 @@ with streamlit_analytics.track():
                         'Return PM': formatted_return
                     })
                 
-                summary_table = pd.DataFrame(summary_data)
+               summary_table = pd.DataFrame(summary_data)
                 
-                # 💡 [Header ရော Data ပါ ကော်လံအလိုက် Left နှင့် Center ကွက်တိခွဲညှိခြင်း]
+                # 💡 [Header Title များကို တစ်ခုချင်းစီ alignment ခွဲခြားထိန်းချုပ်သည့် CSS]
+                # Accessories ခေါင်းစဉ်ကို ဘယ်ကပ်ပြီး၊ ကျန်တဲ့ Out, Total Usage, Return PM ခေါင်းစဉ်တွေကိုပဲ Center ညှိပါတယ်
+                st.markdown("""
+                    <style>
+                        /* ပထမဦးဆုံး ကော်လံခေါင်းစဉ် (Accessories) ကို ဘယ်ဘက်ကပ်ခြင်း */
+                        div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(1) p,
+                        div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(1) {
+                            text-align: left !important;
+                            justify-content: flex-start !important;
+                        }
+                        
+                        /* ကျန်တဲ့ ၂ ခုမြောက်၊ ၃ ခုမြောက်၊ ၄ ခုမြောက် ကော်လံခေါင်းစဉ် (Out, Total Usage, Return PM) များကို Center ချခြင်း */
+                        div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(2) p,
+                        div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(2),
+                        div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(3) p,
+                        div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(3),
+                        div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(4) p,
+                        div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(4) {
+                            text-align: center !important;
+                            justify-content: center !important;
+                            width: 100% !important;
+                        }
+                    </style>
+                """, unsafe_allow_html=True)
+                
+                # ဒေတာကော်လံများအတွက် Alignment သတ်မှတ်ချက်
                 config_summary = {
-                    "Accessories": st.column_config.TextColumn(
-                        alignment="left"
-                    ),
-                    "Out": st.column_config.NumberColumn(
-                        alignment="center",
-                        format="%d"
-                    ),
-                    "Total Usage": st.column_config.NumberColumn(
-                        alignment="center",
-                        format="%d"
-                    ),
-                    "Return to PM": st.column_config.NumberColumn(
-                        alignment="center",
-                        format="%d"
-                    )
+                    "Accessories": st.column_config.Column(alignment="left"),
+                    "Out": st.column_config.NumberColumn(alignment="center", format="%d"),
+                    "Total Usage": st.column_config.NumberColumn(alignment="center", format="%d"),
+                    "Return to PM": st.column_config.NumberColumn(alignment="center", format="%d")
                 }
                 
                 # DataFrame ပြသခြင်း
