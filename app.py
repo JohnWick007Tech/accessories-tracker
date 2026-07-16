@@ -13,18 +13,20 @@ with streamlit_analytics.track():
 
     st.markdown("<h3 style='text-align: center;'>📱 Eng Usage Checker</h3>", unsafe_allow_html=True)
 
-    # 💡 [ပြင်ဆင်ချက်] Streamlit Dataframe ရဲ့ Header (Title) တန်းတွေကိုပါ အသေအချာ Center ညှိရန် CSS selector အသစ်
+    # 💡 ဇယားတစ်ခုလုံး (Header + Data) ကို ခြွင်းချက်မရှိ Center ကျစေရန် HTML Table CSS သတ်မှတ်ခြင်း
     st.markdown("""
         <style>
-            /* Table Header Cell တစ်ခုချင်းစီကို Center ညှိခြင်း */
-            [data-testid="stTable"] th, 
-            .stDataFrame div[role="columnheader"] p,
-            .stDataFrame div[role="columnheader"],
+            table {
+                margin-left: auto;
+                margin-right: auto;
+                width: 100%;
+            }
             th {
                 text-align: center !important;
-                justify-content: center !important;
-                display: flex !important;
-                align-items: center !important;
+                background-color: #f0f2f6;
+            }
+            td {
+                text-align: center !important;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -132,22 +134,16 @@ with streamlit_analytics.track():
             for col in formatted_df.select_dtypes(include='number').columns:
                 formatted_df[col] = formatted_df[col].apply(lambda x: int(x) if x % 1 == 0 else x)
             
-            # TKT/POI Duplicate ရှာဖွေပြီး အရောင်ခြယ်ရန် Function
+            # TKT/POI Duplicate ရှာဖွေပြီး အနီရောင်ခြယ်ရန် Function
             def highlight_duplicates(column):
                 is_dup = column.duplicated(keep=False) & column.notna() & (column != '')
                 return ['background-color: #f8d7da; color: #721c24; font-weight: bold;' if v else '' for v in is_dup]
 
+            # 💡 [ပြင်ဆင်ချက်] st.dataframe အစား ၁၀၀% Center ဝင်စေမည့် st.table ကို သုံးခြင်း
             styled_df = formatted_df.style.apply(highlight_duplicates, subset=['TKT/POI'])
             
-            # Column Config ဖြင့် content တစ်ခုလုံးကို center alignment လုပ်ထားခြင်း
-            config_df = {col: st.column_config.Column(alignment="center") for col in formatted_df.columns}
-                
-            st.dataframe(
-                styled_df, 
-                use_container_width=True, 
-                hide_index=True,
-                column_config=config_df
-            )
+            # index ကို ဖျောက်ပြီး ပြသရန်
+            st.table(styled_df)
             
             total_rows = len(res_usage)
             st.markdown(f"""
@@ -184,14 +180,9 @@ with streamlit_analytics.track():
                     })
                 
                 summary_table = pd.DataFrame(summary_data)
-                config_summary = {col: st.column_config.Column(alignment="center") for col in summary_table.columns}
                 
-                st.dataframe(
-                    summary_table, 
-                    use_container_width=True, 
-                    hide_index=True,
-                    column_config=config_summary
-                )
+                # 💡 [ပြင်ဆင်ချက်] Summary Table ကိုလည်း ၁၀၀% Title ကော Data ပါ Center ကျစေရန် st.table သို့ ပြောင်းလဲခြင်း
+                st.table(summary_table)
                 
         else:
             st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
