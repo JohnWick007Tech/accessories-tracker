@@ -61,11 +61,11 @@ with streamlit_analytics.track():
             'Date': 'Date',
             'Engineer Name': 'Engineer Name',
             'TKT/POI/CPE': 'TKT/POI',                        
-            'Patch Cords(SC/APC) 1M': 'Patch Cords (1M)',          
-            'Patch Cords(SC/APC) 1.5M': 'Patch Cords (1.5M)',
+            'Patch Cords(SC/APC) 1M': 'PC(1M)',          
+            'Patch Cords(SC/APC) 1.5M': 'PC(1.5M)',
             sleeve_col_in_sheet: 'Sleeve with 2 Steels',
-            'Customize (Pencil Kit , white)': 'Customize (Pencil Kit)',
-            'Standard (Pencil Kit , white)': 'Standard (Pencil Kit)'
+            'Customize (Pencil Kit , white)': 'Customize PK',
+            'Standard (Pencil Kit , white)': 'Standard PK'
         }
         
         # Usage Sheet ကို Filter ဖြတ်ပြီး နာမည်ပြောင်းလဲခြင်း
