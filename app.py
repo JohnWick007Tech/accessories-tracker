@@ -13,6 +13,26 @@ with streamlit_analytics.track():
 
     st.markdown("<h3 style='text-align: center;'>📱 Eng Usage Checker</h3>", unsafe_allow_html=True)
 
+    # 💡 [ဒီတစ်ခါ အပိုင်ဆုံး ဖြေရှင်းချက်] st.dataframe ရဲ့ ခေါင်းစဉ် (Header Title) စာသားတွေကိုပါ Center အသေကျစေမယ့် CSS Selector 
+    st.markdown("""
+        <style>
+            /* Streamlit Dataframe ရဲ့ Header Cells ထဲက စာသားတွေကို Center ညှိခြင်း */
+            div[data-testid="stDataFrame"] iframe,
+            div[data-testid="stDataFrame"] table th,
+            div[data-testid="stDataFrame"] div[role="columnheader"] p,
+            div[data-testid="stDataFrame"] div[role="columnheader"] {
+                text-align: center !important;
+                justify-content: center !important;
+                align-items: center !important;
+            }
+            
+            /* Glide Data Grid Header Text Alignment ကိုပါ သက်ရောက်စေရန် */
+            .glideDataGrid-container div {
+                text-align: center !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
     # ⚠️ Google Sheet URLs
     BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
@@ -113,7 +133,7 @@ with streamlit_analytics.track():
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
             
             formatted_df = res_usage.copy()
-            # 💡 [ပြင်ဆင်ချက်] ကိန်းဂဏန်းများကို float မဖြစ်စေဘဲ စာသား (Text) အဖြစ်ကြိုပြောင်းခြင်းဖြင့် Center text config ကို အာနိသင်ပြစေပါသည်
+            # ကိန်းဂဏန်းများကို စာသားအဖြစ်ပြောင်းလဲပေးခြင်း
             for col in formatted_df.select_dtypes(include='number').columns:
                 formatted_df[col] = formatted_df[col].apply(lambda x: str(int(x)) if x % 1 == 0 else str(round(x, 1)))
             
@@ -124,7 +144,7 @@ with streamlit_analytics.track():
 
             styled_df = formatted_df.style.apply(highlight_duplicates, subset=['TKT/POI'])
             
-            # 💡 [ပြင်ဆင်ချက်] st.dataframe ပုံစံမပျက်ဘဲ Header နှင့် Data အားလုံးကို Center ချရန် TextColumn config ကို သုံးခြင်း
+            # TextColumn အသုံးပြုပြီး Alignment ညှိခြင်း
             config_df = {col: st.column_config.TextColumn(alignment="center") for col in formatted_df.columns}
                 
             st.dataframe(
@@ -163,14 +183,12 @@ with streamlit_analytics.track():
                         
                     summary_data.append({
                         'Accessories': col, 
-                        'Out': str(formatted_out),          # Text အဖြစ်ပြောင်းလဲ
-                        'Total Usage': str(formatted_val),  # Text အဖြစ်ပြောင်းလဲ
-                        'Return to PM': str(formatted_return) # Text အဖြစ်ပြောင်းလဲ
+                        'Out': str(formatted_out),
+                        'Total Usage': str(formatted_val),
+                        'Return to PM': str(formatted_return)
                     })
                 
                 summary_table = pd.DataFrame(summary_data)
-                
-                # 💡 [ပြင်ဆင်ချက်] Summary အတွက်ပါ TextColumn config သုံး၍ အားလုံးကို Center အကျဆုံးဖြစ်စေခြင်း
                 config_summary = {col: st.column_config.TextColumn(alignment="center") for col in summary_table.columns}
                 
                 st.dataframe(
