@@ -129,11 +129,11 @@ with streamlit_analytics.track():
                 'Date': st.column_config.Column(alignment="left"),
                 'Engineer Name': st.column_config.Column(alignment="left"),
                 'TKT/POI': st.column_config.Column(alignment="left"),
-                'Patch Cords (1M)': st.column_config.Column(alignment="center"),
-                'Patch Cords (1.5M)': st.column_config.Column(alignment="center"),
+                'PC(1M)': st.column_config.Column(alignment="center"),
+                'PC(1.5M)': st.column_config.Column(alignment="center"),
                 'Sleeve with 2 Steels': st.column_config.Column(alignment="center"),
-                'Customize (Pencil Kit)': st.column_config.Column(alignment="center"),
-                'Standard (Pencil Kit)': st.column_config.Column(alignment="center")
+                'Customize PK': st.column_config.Column(alignment="center"),
+                'Standard PK': st.column_config.Column(alignment="center")
             }
                 
             st.dataframe(
