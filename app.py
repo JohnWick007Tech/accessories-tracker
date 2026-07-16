@@ -63,7 +63,7 @@ with streamlit_analytics.track():
             'TKT/POI/CPE': 'TKT/POI',                        
             'Patch Cords(SC/APC) 1M': 'PC(1M)',          
             'Patch Cords(SC/APC) 1.5M': 'PC(1.5M)',
-            sleeve_col_in_sheet: 'Sleeve with 2 Steels',
+            sleeve_col_in_sheet: '2 Sleeves',
             'Customize (Pencil Kit , white)': 'Customize PK',
             'Standard (Pencil Kit , white)': 'Standard PK'
         }
@@ -131,7 +131,7 @@ with streamlit_analytics.track():
                 'TKT/POI': st.column_config.Column(alignment="left"),
                 'PC(1M)': st.column_config.Column(alignment="center"),
                 'PC(1.5M)': st.column_config.Column(alignment="center"),
-                'Sleeve with 2 Steels': st.column_config.Column(alignment="center"),
+                '2 Sleeves': st.column_config.Column(alignment="center"),
                 'Customize PK': st.column_config.Column(alignment="center"),
                 'Standard PK': st.column_config.Column(alignment="center")
             }
@@ -154,7 +154,7 @@ with streamlit_analytics.track():
             st.write("") 
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Usage Summary</h3>", unsafe_allow_html=True)
             
-            numeric_cols = [col for col in ['PC(1M)', 'PC(1.5M)', 'Sleeve with 2 Steels', 'Customize PK', 'Standard PK'] if col in res_usage.columns]
+            numeric_cols = [col for col in ['PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK'] if col in res_usage.columns]
             
             if numeric_cols:
                 summary_data = []
