@@ -3,14 +3,9 @@ import pandas as pd
 import streamlit_analytics2 as streamlit_analytics
 
 # Page Configuration
-st.set_page_config(
-    page_title="Accessories Tracker", 
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
+st.set_page_config(page_title="Accessories Tracker", layout="centered", initial_sidebar_state="collapsed")
 
 with streamlit_analytics.track():
-
     st.markdown("<h3 style='text-align: center;'>📱 Eng Usage Checker</h3>", unsafe_allow_html=True)
 
     # ⚠️ Google Sheet URLs
@@ -21,146 +16,71 @@ with streamlit_analytics.track():
     @st.cache_data(ttl=30)
     def load_all_data():
         df_usage = pd.read_csv(USAGE_CSV_URL)
-        if 'Date' in df_usage.columns:
-            df_usage['Date'] = pd.to_datetime(df_usage['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
-            
         df_out = pd.read_csv(OUT_CSV_URL)
-        if 'Date' in df_out.columns:
-            df_out['Date'] = pd.to_datetime(df_out['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
-            
+        for df in [df_usage, df_out]:
+            if 'Date' in df.columns:
+                df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
         return df_usage, df_out
 
-    df_usage, df_out = None, None
-    try:
-        df_usage, df_out = load_all_data()
-    except Exception as e:
-        st.error(f"❌ Sheet ဒေတာချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
+    df_usage, df_out = load_all_data()
 
-    if df_usage is not None and df_out is not None:
-        
-        # --- [၁] Sleeve Column အမည်ကို တူညီအောင် ရှာဖွေခြင်း ---
-        sleeve_col_in_sheet = None
-        possible_sleeve_names = ['Sleeves with 2 steels', 'Sleeve with 2 Steels', 'Sleeves with 2 Steels', 'Sleeve with 2 steels']
-        
-        for col in df_usage.columns:
-            if col.strip() in possible_sleeve_names:
-                sleeve_col_in_sheet = col
-                break
-                
-        if not sleeve_col_in_sheet:
-            for col in df_usage.columns:
-                if 'sleeve' in col.lower() and '2' in col:
-                    sleeve_col_in_sheet = col
-                    break
-                    
-        if not sleeve_col_in_sheet:
-            sleeve_col_in_sheet = 'Sleeve with 2 Steels'
+    # Column Mapping
+    columns_mapping = {
+        'Date': 'Date', 'Engineer Name': 'Engineer Name', 'TKT/POI/CPE': 'TKT/POI',
+        'Patch Cords(SC/APC) 1M': 'PC(1M)', 'Patch Cords(SC/APC) 1.5M': 'PC(1.5M)',
+        'Sleeve with 2 Steels': '2 Sleeves', 'Customize (Pencil Kit , white)': 'Customize PK',
+        'Standard (Pencil Kit , white)': 'Standard PK'
+    }
+    
+    filtered_usage = df_usage.rename(columns=columns_mapping)
+    filtered_out = df_out.rename(columns=columns_mapping)
 
-        # စံသတ်မှတ်ထားသော Column Name Maps
-        columns_mapping = {
-            'Date': 'Date',
-            'Engineer Name': 'Engineer Name',
-            'TKT/POI/CPE': 'TKT/POI',                        
-            'Patch Cords(SC/APC) 1M': 'PC(1M)',          
-            'Patch Cords(SC/APC) 1.5M': 'PC(1.5M)',
-            sleeve_col_in_sheet: '2 Sleeves',
-            'Customize (Pencil Kit , white)': 'Customize PK',
-            'Standard (Pencil Kit , white)': 'Standard PK'
+    # UI Filters
+    col1, col2 = st.columns(2)
+    with col1:
+        selected_engineer = st.selectbox("♻️ Filter by Engineer Name:", options=["All Engineers"] + sorted(filtered_usage['Engineer Name'].dropna().unique().tolist()))
+    with col2:
+        selected_date = st.selectbox("📅 Filter by Date:", options=["All Dates"] + sorted(filtered_usage['Date'].dropna().unique().tolist(), reverse=True))
+
+    res_usage = filtered_usage.copy()
+    res_out = filtered_out.copy()
+    if selected_engineer != "All Engineers": res_usage = res_usage[res_usage['Engineer Name'] == selected_engineer]
+    if selected_date != "All Dates": res_usage = res_usage[res_usage['Date'] == selected_date]
+
+    st.divider()
+
+    # R1-Link Table
+    st.markdown("<h3 style='text-align: center;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
+    st.dataframe(res_usage, use_container_width=True, hide_index=True)
+    st.markdown(f"<div style='background-color: #d4edda; text-align: center; padding: 10px;'>✅ Total Upload = {len(res_usage)}</div>", unsafe_allow_html=True)
+
+    # Summary Table
+    st.markdown("<h3 style='text-align: center;'>📈 Total Usage Summary</h3>", unsafe_allow_html=True)
+    numeric_cols = ['PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']
+    
+    summary_data = []
+    for col in numeric_cols:
+        total = res_usage[col].sum() if col in res_usage.columns else 0
+        out = res_out[col].sum() if col in res_out.columns else 0
+        summary_data.append({'Accessories': col, 'Out': int(out), 'Total Usage': int(total), 'Return to PM': int(out - total)})
+    
+    summary_df = pd.DataFrame(summary_data)
+
+    # 💡 [အရေးကြီး] Title များကို Space ထည့်ပြီး အလယ်ညှိခြင်း (CSS မပါ)
+    summary_df = summary_df.rename(columns={
+        'Out': '      Out      ', 
+        'Total Usage': '  Total Usage  ', 
+        'Return to PM': '  Return to PM  '
+    })
+
+    st.dataframe(
+        summary_df, 
+        use_container_width=True, 
+        hide_index=True,
+        column_config={
+            "Accessories": st.column_config.TextColumn("Accessories", width="medium"),
+            "      Out      ": st.column_config.NumberColumn("      Out      ", format="%d"),
+            "  Total Usage  ": st.column_config.NumberColumn("  Total Usage  ", format="%d"),
+            "  Return to PM  ": st.column_config.NumberColumn("  Return to PM  ", format="%d"),
         }
-        
-        available_cols = [col for col in columns_mapping.keys() if col in df_usage.columns]
-        filtered_usage = df_usage[available_cols].copy()
-        filtered_usage = filtered_usage.rename(columns={col: columns_mapping[col] for col in available_cols})
-
-        available_out_cols = [col for col in columns_mapping.keys() if col in df_out.columns]
-        filtered_out = df_out[available_out_cols].copy()
-        filtered_out = filtered_out.rename(columns={col: columns_mapping[col] for col in available_out_cols})
-
-        # --- Dropdowns ဆောက်ခြင်း ---
-        col1, col2 = st.columns(2)
-        with col1:
-            engineers_list = sorted(filtered_usage['Engineer Name'].dropna().unique())
-            selected_engineer = st.selectbox("♻️ Filter by Engineer Name:", options=["All Engineers"] + list(engineers_list))
-        with col2:
-            dates_list = sorted(filtered_usage['Date'].dropna().unique(), reverse=True)
-            selected_date = st.selectbox("📅 Filter by Date:", options=["All Dates"] + list(dates_list))
-
-        # --- ဒေတာ စစ်ထုတ်ခြင်း ---
-        res_usage = filtered_usage.copy()
-        res_out = filtered_out.copy()
-        if selected_engineer != "All Engineers":
-            res_usage = res_usage[res_usage['Engineer Name'] == selected_engineer]
-            res_out = res_out[res_out['Engineer Name'] == selected_engineer]
-        if selected_date != "All Dates":
-            res_usage = res_usage[res_usage['Date'] == selected_date]
-            res_out = res_out[res_out['Date'] == selected_date]
-
-        st.divider()
-
-        # --- [၃] Engineers R1-Link Table ပြသခြင်း ---
-        if not res_usage.empty:
-            st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
-            formatted_df = res_usage.copy()
-            for col in formatted_df.select_dtypes(include='number').columns:
-                formatted_df[col] = formatted_df[col].apply(lambda x: int(x) if x % 1 == 0 else x)
-            
-            def highlight_duplicates(column):
-                is_dup = column.duplicated(keep=False) & column.notna() & (column != '')
-                return ['background-color: #f8d7da; color: #721c24; font-weight: bold;' if v else '' for v in is_dup]
-
-            styled_df = formatted_df.style.apply(highlight_duplicates, subset=['TKT/POI'])
-            
-            config_df = {
-                'Date': st.column_config.Column(alignment="left"),
-                'Engineer Name': st.column_config.Column(alignment="left"),
-                'TKT/POI': st.column_config.Column(alignment="left"),
-                'PC(1M)': st.column_config.Column(alignment="center"),
-                'PC(1.5M)': st.column_config.Column(alignment="center"),
-                '2 Sleeves': st.column_config.Column(alignment="center"),
-                'Customize PK': st.column_config.Column(alignment="center"),
-                'Standard PK': st.column_config.Column(alignment="center")
-            }
-                
-            st.dataframe(styled_df, use_container_width=True, hide_index=True, column_config=config_df)
-            
-            st.markdown(f"""<div style='background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold; margin-top: 10px; margin-bottom: 25px;'>✅ Total Upload = {len(res_usage)}</div>""", unsafe_allow_html=True)
-            
-            # --- [၄] Total Used & Out Summary ---
-            st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Usage Summary</h3>", unsafe_allow_html=True)
-            
-            # CSS Injector
-            st.markdown("""
-                <style>
-                    div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(1) { text-align: left !important; justify-content: flex-start !important; }
-                    div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(2),
-                    div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(3),
-                    div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(4) { text-align: center !important; justify-content: center !important; }
-                </style>
-            """, unsafe_allow_html=True)
-
-            numeric_cols = [col for col in ['PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK'] if col in res_usage.columns]
-            
-            if numeric_cols:
-                summary_data = []
-                for col in numeric_cols:
-                    total_val = pd.to_numeric(res_usage[col], errors='coerce').sum()
-                    out_val = pd.to_numeric(res_out[col], errors='coerce').sum() if col in res_out.columns else 0
-                    summary_data.append({
-                        'Accessories': col, 
-                        'Out': int(out_val),
-                        'Total Usage': int(total_val),
-                        'Return to PM': int(out_val - total_val)
-                    })
-                
-                summary_table = pd.DataFrame(summary_data)
-                
-                config_summary = {
-                    "Accessories": st.column_config.Column(alignment="left"),
-                    "Out": st.column_config.NumberColumn(alignment="center"),
-                    "Total Usage": st.column_config.NumberColumn(alignment="center"),
-                    "Return to PM": st.column_config.NumberColumn(alignment="center")
-                }
-                
-                st.dataframe(summary_table, use_container_width=True, hide_index=True, column_config=config_summary)
-        else:
-            st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
+    )
