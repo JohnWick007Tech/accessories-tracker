@@ -13,24 +13,6 @@ with streamlit_analytics.track():
 
     st.markdown("<h3 style='text-align: center;'>📱 Eng Usage Checker</h3>", unsafe_allow_html=True)
 
-    # 💡 ဇယားတစ်ခုလုံး (Header + Data) ကို ခြွင်းချက်မရှိ Center ကျစေရန် HTML Table CSS သတ်မှတ်ခြင်း
-    st.markdown("""
-        <style>
-            table {
-                margin-left: auto;
-                margin-right: auto;
-                width: 100%;
-            }
-            th {
-                text-align: center !important;
-                background-color: #f0f2f6;
-            }
-            td {
-                text-align: center !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
     # ⚠️ Google Sheet URLs
     BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
@@ -131,19 +113,26 @@ with streamlit_analytics.track():
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
             
             formatted_df = res_usage.copy()
+            # 💡 [ပြင်ဆင်ချက်] ကိန်းဂဏန်းများကို float မဖြစ်စေဘဲ စာသား (Text) အဖြစ်ကြိုပြောင်းခြင်းဖြင့် Center text config ကို အာနိသင်ပြစေပါသည်
             for col in formatted_df.select_dtypes(include='number').columns:
-                formatted_df[col] = formatted_df[col].apply(lambda x: int(x) if x % 1 == 0 else x)
+                formatted_df[col] = formatted_df[col].apply(lambda x: str(int(x)) if x % 1 == 0 else str(round(x, 1)))
             
-            # TKT/POI Duplicate ရှာဖွေပြီး အနီရောင်ခြယ်ရန် Function
+            # TKT/POI Duplicate ရှာဖွေပြီး အရောင်ခြယ်ရန် Function
             def highlight_duplicates(column):
                 is_dup = column.duplicated(keep=False) & column.notna() & (column != '')
                 return ['background-color: #f8d7da; color: #721c24; font-weight: bold;' if v else '' for v in is_dup]
 
-            # 💡 [ပြင်ဆင်ချက်] st.dataframe အစား ၁၀၀% Center ဝင်စေမည့် st.table ကို သုံးခြင်း
             styled_df = formatted_df.style.apply(highlight_duplicates, subset=['TKT/POI'])
             
-            # index ကို ဖျောက်ပြီး ပြသရန်
-            st.table(styled_df)
+            # 💡 [ပြင်ဆင်ချက်] st.dataframe ပုံစံမပျက်ဘဲ Header နှင့် Data အားလုံးကို Center ချရန် TextColumn config ကို သုံးခြင်း
+            config_df = {col: st.column_config.TextColumn(alignment="center") for col in formatted_df.columns}
+                
+            st.dataframe(
+                styled_df, 
+                use_container_width=True, 
+                hide_index=True,
+                column_config=config_df
+            )
             
             total_rows = len(res_usage)
             st.markdown(f"""
@@ -174,15 +163,22 @@ with streamlit_analytics.track():
                         
                     summary_data.append({
                         'Accessories': col, 
-                        'Out': formatted_out,
-                        'Total Usage': formatted_val,
-                        'Return to PM': formatted_return
+                        'Out': str(formatted_out),          # Text အဖြစ်ပြောင်းလဲ
+                        'Total Usage': str(formatted_val),  # Text အဖြစ်ပြောင်းလဲ
+                        'Return to PM': str(formatted_return) # Text အဖြစ်ပြောင်းလဲ
                     })
                 
                 summary_table = pd.DataFrame(summary_data)
                 
-                # 💡 [ပြင်ဆင်ချက်] Summary Table ကိုလည်း ၁၀၀% Title ကော Data ပါ Center ကျစေရန် st.table သို့ ပြောင်းလဲခြင်း
-                st.table(summary_table)
+                # 💡 [ပြင်ဆင်ချက်] Summary အတွက်ပါ TextColumn config သုံး၍ အားလုံးကို Center အကျဆုံးဖြစ်စေခြင်း
+                config_summary = {col: st.column_config.TextColumn(alignment="center") for col in summary_table.columns}
+                
+                st.dataframe(
+                    summary_table, 
+                    use_container_width=True, 
+                    hide_index=True,
+                    column_config=config_summary
+                )
                 
         else:
             st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
