@@ -125,7 +125,7 @@ with streamlit_analytics.track():
             </div>
             """, unsafe_allow_html=True)
             
-            # --- [၄] Total Used & Out Summary ပေါင်းစည်းပြသခြင်း ---
+            # --- [၄] Total Used & Out & Return to PM Summary ပေါင်းစည်းပြသခြင်း ---
             st.write("") 
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Used & Out Summary</h3>", unsafe_allow_html=True)
             
@@ -143,12 +143,17 @@ with streamlit_analytics.track():
                     if col in res_out.columns:
                         out_val = pd.to_numeric(res_out[col], errors='coerce').sum()
                     formatted_out = int(out_val) if out_val % 1 == 0 else round(out_val, 1)
+                    
+                    # 💡 ပြင်ဆင်ချက် - Return to PM (Out - Total Usage) ကို တွက်ချက်ခြင်း
+                    return_val = out_val - total_val
+                    formatted_return = int(return_val) if return_val % 1 == 0 else round(return_val, 1)
                         
-                    # 💡 ပြင်ဆင်ချက် - ကော်လံအစီအစဉ်ကို 'Accessories' -> 'Out' -> 'Total Usage' သို့ ပြောင်းလဲထားပါသည်
+                    # ဇယားကော်လံများ စီစဉ်မှု- Accessories -> Out -> Total Usage -> Return to PM
                     summary_data.append({
                         'Accessories': col, 
                         'Out': formatted_out,
-                        'Total Usage': formatted_val
+                        'Total Usage': formatted_val,
+                        'Return to PM': formatted_return  # 👈 ညာဘက်ဘေးဆုံး ကော်လံအသစ်
                     })
                 
                 summary_table = pd.DataFrame(summary_data)
