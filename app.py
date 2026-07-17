@@ -17,7 +17,7 @@ with streamlit_analytics.track():
     BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
     OUT_CSV_URL = f"{BASE_URL}/export?format=csv&gid=147444867"
-    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=1623311186" # GID အမှန်ထည့်ပါ
+    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=1623311186" 
 
     @st.cache_data(ttl=30)
     def load_all_data():
@@ -65,31 +65,34 @@ with streamlit_analytics.track():
     st.divider()
     st.markdown("<h4 style='text-align: center; color: #d32f2f;'>📉 Today မပါ PM သို့ 5 ရက်အတွင်းအပ်ရန်ကျန်ရှိစာရင်း</h4>", unsafe_allow_html=True)
     
-    # လိုချင်တဲ့ Column တွေကိုပဲ သေချာရွေးထုတ်ခြင်း (Remark ပါထည့်သွင်း)
-    required_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference', 'Remark']
+    # 1. Remark ကို မပါဝင်စေဘဲ Column များ ရွေးထုတ်ခြင်း
+    required_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference']
     available_cols = [c for c in required_cols if c in df_diff.columns]
     res_diff = df_diff[available_cols].copy()
     
-    diff_col1, diff_col2 = st.columns(2)
-    with diff_col1:
-        diff_engs = sorted(res_diff['Eng Name'].dropna().unique())
-        sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + list(diff_engs))
-    with diff_col2:
-        diff_dates = sorted(res_diff['Date'].dropna().unique(), reverse=True)
-        sel_diff_date = st.selectbox("🗓 Select Date (Diff):", ["All Dates"] + list(diff_dates))
+    # 2. Filter လုပ်ခြင်း (Eng Name တစ်ခုတည်းသာ)
+    diff_engs = sorted(df_diff['Eng Name'].dropna().unique())
+    sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + list(diff_engs))
     
-    # Filter လုပ်ခြင်း
-    if sel_diff_eng != "All Engineers": res_diff = res_diff[res_diff['Eng Name'] == sel_diff_eng]
-    if sel_diff_date != "All Dates": res_diff = res_diff[res_diff['Date'] == sel_diff_date]
+    if sel_diff_eng != "All Engineers": 
+        res_diff = res_diff[res_diff['Eng Name'] == sel_diff_eng]
     
-    # 1. Difference < 0 ဖြစ်ရမည်
+    # Remark က 'Done' မဟုတ်တာကို စစ်ထုတ်ခြင်း (မူရင်း df_diff ကိုသုံးပြီး စစ်သည်)
+    mask = df_diff['Remark'].astype(str).str.lower() != 'done'
+    res_diff = res_diff[res_diff.index.isin(df_diff[mask].index)]
+    
+    # 3. Difference < 0 ဖြစ်ရမည်
     res_diff = res_diff[res_diff['Difference'] < 0]
     
-    # 2. Remark က 'Done' ဖြစ်နေတာတွေကို ဖယ်ထုတ်ခြင်း
-    # Remark column ထဲတွင် 'Done' ဟုပါလျှင် ထို row များကို ဖယ်ထုတ်ပါမည်
-    res_diff = res_diff[res_diff['Remark'].astype(str).str.lower() != 'done']
+    # 4. Center ညှိရန် Configuration
+    config_diff = {
+        'Out': st.column_config.Column(alignment="center"),
+        'In': st.column_config.Column(alignment="center"),
+        'Usage From Link': st.column_config.Column(alignment="center"),
+        'Difference': st.column_config.Column(alignment="center")
+    }
     
     if not res_diff.empty:
-        st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400)
+        st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400, column_config=config_diff)
     else:
-        st.info("ℹ️ အပ်ရန်ကျန်ရှိသည့်ပစ္စည်းမရှိပါ။")
+        st.info("ℹ️ အပ်ရန်ကျန်ရှိသည့်ပစ္စည်းမရှိပါ။")
