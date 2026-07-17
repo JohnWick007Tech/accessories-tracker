@@ -17,7 +17,7 @@ with streamlit_analytics.track():
     BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
     OUT_CSV_URL = f"{BASE_URL}/export?format=csv&gid=147444867"
-    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=1623311186" # GID အမှန်ထည့်ပါ
+    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=YOUR_DIFFERENT_TAB_GID" # GID အမှန်ထည့်ပါ
 
     @st.cache_data(ttl=30)
     def load_all_data():
@@ -38,10 +38,14 @@ with streamlit_analytics.track():
         st.error(f"❌ Sheet ဒေတာချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
         st.stop()
 
-    # --- [၁] အပေါ်ပိုင်းအတွက် Filter ---
+    # --- [၁] အပေါ်ပိုင်း (Usage) အတွက် Filter ---
+    # Column အမည်ကို 'Engineer Name' ဟု အတိအကျ သုံးထားသည်
     col1, col2 = st.columns(2)
     with col1:
-        engineers_list = sorted(df_usage['Eng Name'].dropna().unique())
+        # ဒီနေရာမှာ df_usage ထဲက Column အမည်နဲ့ ကိုက်ညီအောင် 'Engineer Name' သို့မဟုတ် 'Eng Name' ကို သေချာစစ်ပြီး ရေးပေးပါ
+        # သင့်Sheet ထဲမှာ 'Engineer Name' လို့ရှိရင် ဒါကိုသုံးပါ။
+        eng_col = 'Engineer Name' if 'Engineer Name' in df_usage.columns else 'Eng Name'
+        engineers_list = sorted(df_usage[eng_col].dropna().unique())
         sel_eng = st.selectbox("♻️ Filter by Engineer Name:", ["All Engineers"] + list(engineers_list))
     with col2:
         dates_list = sorted(df_usage['Date'].dropna().unique(), reverse=True)
@@ -49,7 +53,7 @@ with streamlit_analytics.track():
 
     # --- [၂] အပေါ်ပိုင်း Data ပြသခြင်း ---
     res_usage = df_usage.copy()
-    if sel_eng != "All Engineers": res_usage = res_usage[res_usage['Eng Name'] == sel_eng]
+    if sel_eng != "All Engineers": res_usage = res_usage[res_usage[eng_col] == sel_eng]
     if sel_date != "All Dates": res_usage = res_usage[res_usage['Date'] == sel_date]
 
     st.divider()
@@ -63,9 +67,9 @@ with streamlit_analytics.track():
     st.divider()
     st.markdown("<h3 style='text-align: center; color: #d32f2f;'>📉 Negative Differences Analysis</h3>", unsafe_allow_html=True)
     
-    # Negative Difference သီးသန့် Filter အတွက် Column များ
     diff_col1, diff_col2 = st.columns(2)
     with diff_col1:
+        # Different Tab အတွက် 'Eng Name' ကို သုံးထားသည်
         diff_engs = sorted(df_diff['Eng Name'].dropna().unique())
         sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + list(diff_engs))
     with diff_col2:
@@ -77,7 +81,7 @@ with streamlit_analytics.track():
     if sel_diff_eng != "All Engineers": res_diff = res_diff[res_diff['Eng Name'] == sel_diff_eng]
     if sel_diff_date != "All Dates": res_diff = res_diff[res_diff['Date'] == sel_diff_date]
     
-    # Negative တန်ဖိုးများကိုသာ စစ်ထုတ်ခြင်း
+    # Difference < 0 ကို စစ်ထုတ်ခြင်း
     res_diff = res_diff[res_diff['Difference'] < 0]
     
     if not res_diff.empty:
