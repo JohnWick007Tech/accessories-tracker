@@ -40,7 +40,6 @@ with streamlit_analytics.track():
 
     # --- [၁] အပေါ်ပိုင်း (Usage) အတွက် Filter ---
     col1, col2 = st.columns(2)
-    # df_usage ထဲက Engineer Name column အမည်ကို စစ်ဆေးခြင်း
     eng_col = 'Engineer Name' if 'Engineer Name' in df_usage.columns else 'Eng Name'
     
     with col1:
@@ -58,7 +57,8 @@ with streamlit_analytics.track():
     st.divider()
     if not res_usage.empty:
         st.markdown("<h3 style='text-align: center;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
-        st.dataframe(res_usage, use_container_width=True, hide_index=True)
+        # height=400 ထည့်ခြင်းဖြင့် Table အရှည်ကြီးဖြစ်သွားလျှင် Header ကို Freeze လုပ်ပေးပါသည်
+        st.dataframe(res_usage, use_container_width=True, hide_index=True, height=400)
     else:
         st.warning("⚠️ မှတ်တမ်း မရှိပါ။")
 
@@ -66,12 +66,11 @@ with streamlit_analytics.track():
     st.divider()
     st.markdown("<h3 style='text-align: center; color: #d32f2f;'>📉 Negative Differences Analysis</h3>", unsafe_allow_html=True)
     
-    # [ပြင်ဆင်ချက်] လိုချင်တဲ့ Column တွေကိုပဲ သေချာရွေးထုတ်ခြင်း
+    # လိုချင်တဲ့ Column တွေကိုပဲ သေချာရွေးထုတ်ခြင်း
     required_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference']
     available_cols = [c for c in required_cols if c in df_diff.columns]
     res_diff = df_diff[available_cols].copy()
     
-    # Negative Difference သီးသန့် Filter အတွက် Column များ
     diff_col1, diff_col2 = st.columns(2)
     with diff_col1:
         diff_engs = sorted(res_diff['Eng Name'].dropna().unique())
@@ -88,6 +87,7 @@ with streamlit_analytics.track():
     res_diff = res_diff[res_diff['Difference'] < 0]
     
     if not res_diff.empty:
-        st.dataframe(res_diff, use_container_width=True, hide_index=True)
+        # height=400 ထည့်ခြင်းဖြင့် Table အရှည်ကြီးဖြစ်သွားလျှင် Header ကို Freeze လုပ်ပေးပါသည်
+        st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400)
     else:
         st.info("ℹ️ ရွေးချယ်ထားသော အချက်အလက်များတွင် Negative Difference မရှိပါ။")
