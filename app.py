@@ -39,12 +39,11 @@ with streamlit_analytics.track():
         st.stop()
 
     # --- [၁] အပေါ်ပိုင်း (Usage) အတွက် Filter ---
-    # Column အမည်ကို 'Engineer Name' ဟု အတိအကျ သုံးထားသည်
     col1, col2 = st.columns(2)
+    # df_usage ထဲက Engineer Name column အမည်ကို စစ်ဆေးခြင်း
+    eng_col = 'Engineer Name' if 'Engineer Name' in df_usage.columns else 'Eng Name'
+    
     with col1:
-        # ဒီနေရာမှာ df_usage ထဲက Column အမည်နဲ့ ကိုက်ညီအောင် 'Engineer Name' သို့မဟုတ် 'Eng Name' ကို သေချာစစ်ပြီး ရေးပေးပါ
-        # သင့်Sheet ထဲမှာ 'Engineer Name' လို့ရှိရင် ဒါကိုသုံးပါ။
-        eng_col = 'Engineer Name' if 'Engineer Name' in df_usage.columns else 'Eng Name'
         engineers_list = sorted(df_usage[eng_col].dropna().unique())
         sel_eng = st.selectbox("♻️ Filter by Engineer Name:", ["All Engineers"] + list(engineers_list))
     with col2:
@@ -67,17 +66,21 @@ with streamlit_analytics.track():
     st.divider()
     st.markdown("<h3 style='text-align: center; color: #d32f2f;'>📉 Negative Differences Analysis</h3>", unsafe_allow_html=True)
     
+    # [ပြင်ဆင်ချက်] လိုချင်တဲ့ Column တွေကိုပဲ သေချာရွေးထုတ်ခြင်း
+    required_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference']
+    available_cols = [c for c in required_cols if c in df_diff.columns]
+    res_diff = df_diff[available_cols].copy()
+    
+    # Negative Difference သီးသန့် Filter အတွက် Column များ
     diff_col1, diff_col2 = st.columns(2)
     with diff_col1:
-        # Different Tab အတွက် 'Eng Name' ကို သုံးထားသည်
-        diff_engs = sorted(df_diff['Eng Name'].dropna().unique())
+        diff_engs = sorted(res_diff['Eng Name'].dropna().unique())
         sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + list(diff_engs))
     with diff_col2:
-        diff_dates = sorted(df_diff['Date'].dropna().unique(), reverse=True)
+        diff_dates = sorted(res_diff['Date'].dropna().unique(), reverse=True)
         sel_diff_date = st.selectbox("🗓 Select Date (Diff):", ["All Dates"] + list(diff_dates))
     
     # Filter လုပ်ခြင်း
-    res_diff = df_diff.copy()
     if sel_diff_eng != "All Engineers": res_diff = res_diff[res_diff['Eng Name'] == sel_diff_eng]
     if sel_diff_date != "All Dates": res_diff = res_diff[res_diff['Date'] == sel_diff_date]
     
