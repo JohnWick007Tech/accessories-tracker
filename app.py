@@ -78,7 +78,7 @@ with streamlit_analytics.track():
 
     # --- [၂] Negative Differences Analysis ---
     st.divider()
-    st.markdown("<h4 style='text-align: center; color: #d32f2f;'>📉 Negative Differences Analysis</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #d32f2f;'>📉 ဒီနေ့မပါ ငါးရက်အတွင်း PMသို့အပ်ရန်ကျန်ရှိစာရင်း", unsafe_allow_html=True)
 
     sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + sorted(df_diff['Eng Name'].dropna().unique().tolist()))
     
