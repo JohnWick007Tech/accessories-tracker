@@ -17,6 +17,8 @@ with streamlit_analytics.track():
     BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
     OUT_CSV_URL = f"{BASE_URL}/export?format=csv&gid=147444867"
+    # GID ကို ဒီနေရာမှာ အစားထိုးပေးပါ
+    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=YOUR_DIFFERENT_TAB_GID"
 
     @st.cache_data(ttl=30)
     def load_all_data():
@@ -28,15 +30,19 @@ with streamlit_analytics.track():
         if 'Date' in df_out.columns:
             df_out['Date'] = pd.to_datetime(df_out['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
             
-        return df_usage, df_out
+        df_diff = pd.read_csv(DIFF_CSV_URL)
+        if 'Date' in df_diff.columns:
+            df_diff['Date'] = pd.to_datetime(df_diff['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
+            
+        return df_usage, df_out, df_diff
 
-    df_usage, df_out = None, None
+    df_usage, df_out, df_diff = None, None, None
     try:
-        df_usage, df_out = load_all_data()
+        df_usage, df_out, df_diff = load_all_data()
     except Exception as e:
         st.error(f"❌ Sheet ဒေတာချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
 
-    if df_usage is not None and df_out is not None:
+    if df_usage is not None and df_out is not None and df_diff is not None:
         
         # --- [၁] Sleeve Column အမည်ကို တူညီအောင် ရှာဖွေခြင်း ---
         sleeve_col_in_sheet = None
@@ -60,7 +66,7 @@ with streamlit_analytics.track():
         columns_mapping = {
             'Date': 'Date',
             'Engineer Name': 'Engineer Name',
-            'TKT/POI/CPE': 'TKT/POI',                        
+            'TKT/POI/CPE': 'TKT/POI',                
             'Patch Cords(SC/APC) 1M': 'PC(1M)',          
             'Patch Cords(SC/APC) 1.5M': 'PC(1.5M)',
             sleeve_col_in_sheet: '2 Sleeves',
@@ -94,7 +100,7 @@ with streamlit_analytics.track():
                 options=["All Dates"] + list(dates_list)
             )
 
-        # --- ဒေတာ စစ်ထုတ်ခြင်း (Filter) ---
+        # --- ဒေတာ စစ်ထုတ်ခြင်း ---
         res_usage = filtered_usage.copy()
         res_out = filtered_out.copy()
         
@@ -112,19 +118,12 @@ with streamlit_analytics.track():
         if not res_usage.empty:
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
             
-            formatted_df = res_usage.copy()
-            # ကိန်းဂဏန်းများကို သေသပ်အောင် ပြင်ဆင်ခြင်း
-            for col in formatted_df.select_dtypes(include='number').columns:
-                formatted_df[col] = formatted_df[col].apply(lambda x: int(x) if x % 1 == 0 else x)
-            
-            # TKT/POI Duplicate ရှာဖွေပြီး အရောင်ခြယ်ရန် Function
             def highlight_duplicates(column):
                 is_dup = column.duplicated(keep=False) & column.notna() & (column != '')
                 return ['background-color: #f8d7da; color: #721c24; font-weight: bold;' if v else '' for v in is_dup]
 
-            styled_df = formatted_df.style.apply(highlight_duplicates, subset=['TKT/POI'])
+            styled_df = res_usage.style.apply(highlight_duplicates, subset=['TKT/POI'])
             
-            # 💡 [ပြင်ဆင်ချက်] အနီရောင်ကွက်ထဲက ကော်လံတွေကို ဘယ်ကပ် (left) ထားပြီး၊ ပစ္စည်းအရေအတွက်တွေကိုပဲ အလယ် (center) ညှိခြင်း
             config_df = {
                 'Date': st.column_config.Column(alignment="left"),
                 'Engineer Name': st.column_config.Column(alignment="left"),
@@ -136,65 +135,42 @@ with streamlit_analytics.track():
                 'Standard PK': st.column_config.Column(alignment="center")
             }
                 
-            st.dataframe(
-                styled_df, 
-                use_container_width=True, 
-                hide_index=True,
-                column_config=config_df
-            )
+            st.dataframe(styled_df, use_container_width=True, hide_index=True, column_config=config_df)
             
-            total_rows = len(res_usage)
             st.markdown(f"""
             <div style='background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold; border: 1px solid #c3e6cb; margin-top: 10px; margin-bottom: 25px;'>
-                ✅ Total Upload = {total_rows}
+                ✅ Total Upload = {len(res_usage)}
             </div>
             """, unsafe_allow_html=True)
             
-            # --- [၄] Total Used & Out & Return to PM Summary ပြသခြင်း ---
-            st.write("") 
+            # --- [၄] Total Usage Summary ---
             st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📈 Total Usage Summary</h3>", unsafe_allow_html=True)
-            
             numeric_cols = [col for col in ['PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK'] if col in res_usage.columns]
             
-            if numeric_cols:
-                summary_data = []
-                for col in numeric_cols:
-                    total_val = pd.to_numeric(res_usage[col], errors='coerce').sum()
-                    formatted_val = int(total_val) if total_val % 1 == 0 else round(total_val, 1)
-                    
-                    out_val = 0
-                    if col in res_out.columns:
-                        out_val = pd.to_numeric(res_out[col], errors='coerce').sum()
-                    formatted_out = int(out_val) if out_val % 1 == 0 else round(out_val, 1)
-                    
-                    return_val = out_val - total_val
-                    formatted_return = int(return_val) if return_val % 1 == 0 else round(return_val, 1)
-                        
-                    summary_data.append({
-                        'Accessories': col, 
-                        'Out': formatted_out,
-                        'Total Usage': formatted_val,
-                        'Return PM': formatted_return
-                    })
-                
-                summary_table = pd.DataFrame(summary_data)
-                
-                # 💡 [ပြင်ဆင်ချက်] ကော်လံအမည်တွေကို stripping လုပ်ပြီး config တိုက်ရိုက်သတ်မှတ်ခြင်း
-                # Accessories ကို ဘယ်ကပ် (left) ထားပြီး ကျန်တဲ့ Out အပါအဝင် Number တွေအားလုံးကို Center အသေချာဆုံးကျစေရန်
-                config_summary = {}
-                for col in summary_table.columns:
-                    if 'accessories' in col.lower():
-                        config_summary[col] = st.column_config.Column(alignment="left")
-                    else:
-                        config_summary[col] = st.column_config.Column(alignment="center")
-                
-                # DataFrame ပြသခြင်း
-                st.dataframe(
-                    summary_table, 
-                    use_container_width=True, 
-                    hide_index=True,
-                    column_config=config_summary
-                )
-                
+            summary_data = []
+            for col in numeric_cols:
+                total_val = pd.to_numeric(res_usage[col], errors='coerce').sum()
+                out_val = pd.to_numeric(res_out[col], errors='coerce').sum() if col in res_out.columns else 0
+                summary_data.append({'Accessories': col, 'Out': int(out_val), 'Total Usage': int(total_val), 'Return PM': int(out_val - total_val)})
+            
+            st.dataframe(pd.DataFrame(summary_data), use_container_width=True, hide_index=True)
+
+            # --- [၅] Negative Difference Analysis ---
+            st.divider()
+            st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📉 Negative Differences Analysis</h3>", unsafe_allow_html=True)
+            
+            res_diff = df_diff.copy()
+            if selected_engineer != "All Engineers":
+                res_diff = res_diff[res_diff['Eng Name'] == selected_engineer]
+            if selected_date != "All Dates":
+                res_diff = res_diff[res_diff['Date'] == selected_date]
+            
+            res_diff = res_diff[res_diff['Difference'] < 0]
+            
+            if not res_diff.empty:
+                st.dataframe(res_diff, use_container_width=True, hide_index=True)
+            else:
+                st.info("ℹ️ ရွေးချယ်ထားသော အချက်အလက်များတွင် Negative Difference မတွေ့ရှိရပါ။")
+
         else:
             st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
