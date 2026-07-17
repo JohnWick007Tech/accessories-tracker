@@ -57,17 +57,16 @@ with streamlit_analytics.track():
     st.divider()
     if not res_usage.empty:
         st.markdown("<h3 style='text-align: center;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
-        # height=400 ထည့်ခြင်းဖြင့် Table အရှည်ကြီးဖြစ်သွားလျှင် Header ကို Freeze လုပ်ပေးပါသည်
         st.dataframe(res_usage, use_container_width=True, hide_index=True, height=400)
     else:
         st.warning("⚠️ မှတ်တမ်း မရှိပါ။")
 
     # --- [၃] Negative Differences Analysis (သီးသန့် Filter ဖြင့်) ---
     st.divider()
-    st.markdown("<h3 style='text-align: center; color: #d32f2f;'>📉 PM သို့ပြန်အပ်ရန်ကျန်သောပစ္စည်းများ ( 5 ရက်စာဒီနေ့မပါဝင်ပါ )</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #d32f2f;'>📉 Negative Differences Analysis</h3>", unsafe_allow_html=True)
     
-    # လိုချင်တဲ့ Column တွေကိုပဲ သေချာရွေးထုတ်ခြင်း
-    required_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference']
+    # လိုချင်တဲ့ Column တွေကိုပဲ သေချာရွေးထုတ်ခြင်း (Remark ပါထည့်သွင်း)
+    required_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference', 'Remark']
     available_cols = [c for c in required_cols if c in df_diff.columns]
     res_diff = df_diff[available_cols].copy()
     
@@ -83,11 +82,14 @@ with streamlit_analytics.track():
     if sel_diff_eng != "All Engineers": res_diff = res_diff[res_diff['Eng Name'] == sel_diff_eng]
     if sel_diff_date != "All Dates": res_diff = res_diff[res_diff['Date'] == sel_diff_date]
     
-    # Difference < 0 ကို စစ်ထုတ်ခြင်း
+    # 1. Difference < 0 ဖြစ်ရမည်
     res_diff = res_diff[res_diff['Difference'] < 0]
     
+    # 2. Remark က 'Done' ဖြစ်နေတာတွေကို ဖယ်ထုတ်ခြင်း
+    # Remark column ထဲတွင် 'Done' ဟုပါလျှင် ထို row များကို ဖယ်ထုတ်ပါမည်
+    res_diff = res_diff[res_diff['Remark'].astype(str).str.lower() != 'done']
+    
     if not res_diff.empty:
-        # height=400 ထည့်ခြင်းဖြင့် Table အရှည်ကြီးဖြစ်သွားလျှင် Header ကို Freeze လုပ်ပေးပါသည်
         st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400)
     else:
-        st.info("ℹ️ ရွေးချယ်ထားသော အချက်အလက်များတွင် Negative Difference မရှိပါ။")
+        st.info("ℹ️ ရွေးချယ်ထားသော အချက်အလက်များတွင် Negative Difference (Remark 'Done' မဟုတ်) မရှိပါ။")
