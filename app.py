@@ -30,14 +30,12 @@ with streamlit_analytics.track():
         st.stop()
 
     # --- [၁] Usage Data Setup ---
-    sleeve_col = next((c for c in df_usage.columns if 'sleeve' in c.lower()), 'Sleeve with 2 Steels')
-    cols_map = {'Date': 'Date', 'Engineer Name': 'Engineer Name', 'TKT/POI/CPE': 'TKT/POI', 
-                'Patch Cords(SC/APC) 1M': 'PC(1M)', 'Patch Cords(SC/APC) 1.5M': 'PC(1.5M)', 
-                sleeve_col: '2 Sleeves', 'Customize (Pencil Kit , white)': 'Customize PK', 
-                'Standard (Pencil Kit , white)': 'Standard PK'}
+    # သင်သတ်မှတ်ထားတဲ့ Column အမည်များကိုသာ ရွေးထုတ်ခြင်း
+    required_usage_cols = ['Date', 'Engineer Name', 'TKT/POI/CPE', 'Patch Cords(SC/APC) 1M', 'Patch Cords(SC/APC) 1.5M', 'Sleeve with 2 Steels', 'Customize (Pencil Kit , white)', 'Standard (Pencil Kit , white)']
     
-    res_usage = df_usage.rename(columns=cols_map)
-    res_out = df_out.rename(columns=cols_map)
+    # ရရှိနိုင်တဲ့ Col တွေကိုသာ စစ်ထုတ်ယူခြင်း
+    res_usage = df_usage[[c for c in required_usage_cols if c in df_usage.columns]].copy()
+    res_out = df_out.copy()
 
     col1, col2 = st.columns(2)
     with col1:
@@ -55,42 +53,44 @@ with streamlit_analytics.track():
     st.divider()
     if not res_usage.empty:
         st.markdown("<h3 style='text-align: center;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
-        st.dataframe(res_usage, use_container_width=True, hide_index=True)
+        # အလယ်ကပ်ရန်အတွက် Configuration
+        config_usage = {col: st.column_config.Column(alignment="center") for col in res_usage.columns if col not in ['Date', 'Engineer Name', 'TKT/POI/CPE']}
+        st.dataframe(res_usage, use_container_width=True, hide_index=True, column_config=config_usage)
 
+        # Summary Table
         st.markdown("<h3 style='text-align: center;'>📈 Total Usage Summary</h3>", unsafe_allow_html=True)
+        # Summary အတွက် လိုအပ်သော Col များ
+        summary_cols = ['Patch Cords(SC/APC) 1M', 'Patch Cords(SC/APC) 1.5M', 'Sleeve with 2 Steels', 'Customize (Pencil Kit , white)', 'Standard (Pencil Kit , white)']
         summary = []
-        for col in ['PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']:
+        for col in summary_cols:
             if col in res_usage.columns:
                 total = pd.to_numeric(res_usage[col], errors='coerce').sum()
                 out = pd.to_numeric(res_out[col], errors='coerce').sum() if col in res_out.columns else 0
                 summary.append({'Accessories': col, 'Out': int(out), 'Total Usage': int(total), 'Return PM': int(out - total)})
-        st.dataframe(pd.DataFrame(summary), use_container_width=True, hide_index=True)
+        
+        if summary:
+            st.dataframe(pd.DataFrame(summary), use_container_width=True, hide_index=True)
 
     # --- [၂] Negative Differences Analysis ---
     st.divider()
     st.markdown("<h4 style='text-align: center; color: #d32f2f;'>📉 Negative Differences Analysis</h4>", unsafe_allow_html=True)
 
-    # Filter Setup
     sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + sorted(df_diff['Eng Name'].dropna().unique().tolist()))
     
-    # [ပြင်ဆင်ချက်] လိုချင်တဲ့ ကော်လံတွေကိုပဲ ရွေးထုတ်ခြင်း (Unnamed များ ပါမလာစေရန်)
-    required_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference']
-    res_diff = df_diff[[c for c in required_cols if c in df_diff.columns]].copy()
+    required_diff_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference']
+    res_diff = df_diff[[c for c in required_diff_cols if c in df_diff.columns]].copy()
     
-    # Filter လုပ်ခြင်း
     if sel_diff_eng != "All Engineers":
         res_diff = res_diff[res_diff['Eng Name'] == sel_diff_eng]
     
     res_diff = res_diff[res_diff['Difference'] < 0]
     
-    # Remark 'Done' ဖယ်ထုတ်ခြင်း
     if 'Remark' in df_diff.columns:
         mask = df_diff['Remark'].astype(str).str.lower() != 'done'
         res_diff = res_diff[res_diff.index.isin(df_diff[mask].index)]
 
-    # Display (Center Alignment အသေချာဆုံးဖြစ်စေရန်)
     if not res_diff.empty:
-        config = {col: st.column_config.Column(alignment="center") for col in res_diff.columns}
-        st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400, column_config=config)
+        config_diff = {col: st.column_config.Column(alignment="center") for col in res_diff.columns}
+        st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400, column_config=config_diff)
     else:
         st.info("ℹ️ အပ်ရန်ကျန်ရှိသည့်ပစ္စည်းမရှိပါ။")
