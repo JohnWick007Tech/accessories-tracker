@@ -18,7 +18,7 @@ with streamlit_analytics.track():
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
     OUT_CSV_URL = f"{BASE_URL}/export?format=csv&gid=147444867"
     # GID ကို ဒီနေရာမှာ အစားထိုးပေးပါ
-    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=YOUR_DIFFERENT_TAB_GID"
+    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=1623311186"
 
     @st.cache_data(ttl=30)
     def load_all_data():
