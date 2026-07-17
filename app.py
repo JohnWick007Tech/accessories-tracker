@@ -63,7 +63,7 @@ with streamlit_analytics.track():
 
     # --- [၃] Negative Differences Analysis (သီးသန့် Filter ဖြင့်) ---
     st.divider()
-    st.markdown("<h3 style='text-align: center; color: #d32f2f;'>📉 Negative Differences Analysis</h3>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #d32f2f;'>📉 Today မပါ PM သို့ 5 ရက်အတွင်းအပ်ရန်ကျန်ရှိစာရင်း</h4>", unsafe_allow_html=True)
     
     # လိုချင်တဲ့ Column တွေကိုပဲ သေချာရွေးထုတ်ခြင်း (Remark ပါထည့်သွင်း)
     required_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference', 'Remark']
@@ -92,4 +92,4 @@ with streamlit_analytics.track():
     if not res_diff.empty:
         st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400)
     else:
-        st.info("ℹ️ ရွေးချယ်ထားသော အချက်အလက်များတွင် Negative Difference (Remark 'Done' မဟုတ်) မရှိပါ။")
+        st.info("ℹ️ အပ်ရန်ကျန်ရှိသည့်ပစ္စည်းမရှိပါ။")
