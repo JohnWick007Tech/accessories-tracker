@@ -17,7 +17,7 @@ with streamlit_analytics.track():
     BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
     OUT_CSV_URL = f"{BASE_URL}/export?format=csv&gid=147444867"
-    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=YOUR_DIFFERENT_TAB_GID" # GID အမှန်ထည့်ပါ
+    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=1623311186" # GID အမှန်ထည့်ပါ
 
     @st.cache_data(ttl=30)
     def load_all_data():
