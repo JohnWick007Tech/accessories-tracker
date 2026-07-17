@@ -73,17 +73,22 @@ with streamlit_analytics.track():
     # Filter Setup
     sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + sorted(df_diff['Eng Name'].dropna().unique().tolist()))
     
-    # Logic
-    res_diff = df_diff.copy()
+    # [ပြင်ဆင်ချက်] လိုချင်တဲ့ ကော်လံတွေကိုပဲ ရွေးထုတ်ခြင်း (Unnamed များ ပါမလာစေရန်)
+    required_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference']
+    res_diff = df_diff[[c for c in required_cols if c in df_diff.columns]].copy()
+    
+    # Filter လုပ်ခြင်း
     if sel_diff_eng != "All Engineers":
         res_diff = res_diff[res_diff['Eng Name'] == sel_diff_eng]
     
     res_diff = res_diff[res_diff['Difference'] < 0]
-    if 'Remark' in res_diff.columns:
-        res_diff = res_diff[res_diff['Remark'].astype(str).str.lower() != 'done']
-        res_diff = res_diff.drop(columns=['Remark'])
+    
+    # Remark 'Done' ဖယ်ထုတ်ခြင်း
+    if 'Remark' in df_diff.columns:
+        mask = df_diff['Remark'].astype(str).str.lower() != 'done'
+        res_diff = res_diff[res_diff.index.isin(df_diff[mask].index)]
 
-    # Display
+    # Display (Center Alignment အသေချာဆုံးဖြစ်စေရန်)
     if not res_diff.empty:
         config = {col: st.column_config.Column(alignment="center") for col in res_diff.columns}
         st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400, column_config=config)
