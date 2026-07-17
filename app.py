@@ -36,7 +36,12 @@ with streamlit_analytics.track():
                 sleeve_col: '2 Sleeves', 'Customize (Pencil Kit , white)': 'Customize PK', 
                 'Standard (Pencil Kit , white)': 'Standard PK'}
     
+    # ရွေးထုတ်ထားသော Column များ
+    required_usage_cols = ['Date', 'Engineer Name', 'TKT/POI', 'PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']
+    
     res_usage = df_usage.rename(columns=cols_map)
+    # လိုအပ်သော column များသာ ရွေးထုတ်ခြင်း
+    res_usage = res_usage[[c for c in required_usage_cols if c in res_usage.columns]]
     res_out = df_out.rename(columns=cols_map)
 
     col1, col2 = st.columns(2)
@@ -75,27 +80,30 @@ with streamlit_analytics.track():
     st.divider()
     st.markdown("<h4 style='text-align: center; color: #d32f2f;'>📉 Negative Differences Analysis</h4>", unsafe_allow_html=True)
 
-    # Filter Setup (Eng Name သီးသန့်)
     sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + sorted(df_diff['Eng Name'].dropna().unique().tolist()))
     
-    # လိုချင်တဲ့ Columns များသာ ရွေးထုတ်ခြင်း (Unnamed များ ပါမလာစေရန်)
     required_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference']
     res_diff = df_diff[[c for c in required_cols if c in df_diff.columns]].copy()
     
-    # Filter လုပ်ခြင်း
     if sel_diff_eng != "All Engineers":
         res_diff = res_diff[res_diff['Eng Name'] == sel_diff_eng]
     
     res_diff = res_diff[res_diff['Difference'] < 0]
     
-    # Remark 'Done' ဖြစ်နေတာတွေကို ဖယ်ထုတ်ခြင်း
     if 'Remark' in df_diff.columns:
         mask = df_diff['Remark'].astype(str).str.lower() != 'done'
         res_diff = res_diff[res_diff.index.isin(df_diff[mask].index)]
 
-    # Display (Center Alignment အသေချာဆုံးဖြစ်စေရန်)
     if not res_diff.empty:
-        config = {col: st.column_config.Column(alignment="center") for col in res_diff.columns}
-        st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400, column_config=config)
+        diff_config = {
+            'Eng Name': st.column_config.Column(alignment="left"),
+            'Product Name': st.column_config.Column(alignment="left"),
+            'Date': st.column_config.Column(alignment="center"),
+            'Out': st.column_config.Column(alignment="center"),
+            'In': st.column_config.Column(alignment="center"),
+            'Usage From Link': st.column_config.Column(alignment="center"),
+            'Difference': st.column_config.Column(alignment="center")
+        }
+        st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400, column_config=diff_config)
     else:
         st.info("ℹ️ အပ်ရန်ကျန်ရှိသည့်ပစ္စည်းမရှိပါ။")
