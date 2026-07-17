@@ -64,7 +64,7 @@ with streamlit_analytics.track():
 
     # --- [၃] Negative Differences Analysis (သီးသန့် Filter ဖြင့်) ---
     st.divider()
-    st.markdown("<h3 style='text-align: center; color: #d32f2f;'>📉 Negative Differences Analysis</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #d32f2f;'>📉 PM သို့ပြန်အပ်ရန်ကျန်သောပစ္စည်းများ ( 5 ရက်စာဒီနေ့မပါဝင်ပါ )</h3>", unsafe_allow_html=True)
     
     # လိုချင်တဲ့ Column တွေကိုပဲ သေချာရွေးထုတ်ခြင်း
     required_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference']
