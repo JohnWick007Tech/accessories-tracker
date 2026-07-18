@@ -17,6 +17,8 @@ with streamlit_analytics.track():
     BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
     OUT_CSV_URL = f"{BASE_URL}/export?format=csv&gid=147444867"
+    # 🆕 Different Tab အတွက် URL အသစ် (gid=162331186)
+    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=162331186"
 
     @st.cache_data(ttl=30)
     def load_all_data():
@@ -28,15 +30,17 @@ with streamlit_analytics.track():
         if 'Date' in df_out.columns:
             df_out['Date'] = pd.to_datetime(df_out['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
             
-        return df_usage, df_out
+        # 🆕 Different Tab ဒေတာကိုပါ cache ထဲတွင် တစ်ခါတည်းဖတ်ယူခြင်း
+        df_diff = pd.read_csv(DIFF_CSV_URL)
+        return df_usage, df_out, df_diff
 
-    df_usage, df_out = None, None
+    df_usage, df_out, df_diff = None, None, None
     try:
-        df_usage, df_out = load_all_data()
+        df_usage, df_out, df_diff = load_all_data()
     except Exception as e:
         st.error(f"❌ Sheet ဒေတာချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
 
-    if df_usage is not None and df_out is not None:
+    if df_usage is not None and df_out is not None and df_diff is not None:
         
         # --- [၁] Sleeve Column အမည်ကို တူညီအောင် ရှာဖွေခြင်း ---
         sleeve_col_in_sheet = None
@@ -198,3 +202,63 @@ with streamlit_analytics.track():
                 
         else:
             st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
+
+        # =========================================================================
+        # 🆕 [အသစ်တိုးချဲ့မှု] DIFFERENT TAB DATA DISPLAY SECTION (Column A to F)
+        # =========================================================================
+        st.write("")
+        st.divider()
+        st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📋 Different Tab Summary</h3>", unsafe_allow_html=True)
+        
+        # ကော်လံအမည်များ၏ ရှေ့/နောက် ကွက်လပ်များကို ရှင်းလင်းခြင်း
+        df_diff.columns = [str(col).strip() for col in df_diff.columns]
+        
+        # Column A မှ F အထိ ပြသမည့် ကော်လံ ၆ ခုကို သတ်မှတ်ခြင်း
+        diff_target_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link']
+        
+        # Sheet ထဲတွင် ရှိနေသော ကော်လံများကိုသာ စစ်ထုတ်ယူခြင်း
+        available_diff_cols = [col for col in diff_target_cols if col in df_diff.columns]
+        filtered_diff = df_diff[available_diff_cols].copy()
+        
+        # Eng Name Column ရှိလျှင် သီးသန့် Filter Box တစ်ခု ဖန်တီးခြင်း (Date Filter မပါပါ)
+        if 'Eng Name' in filtered_diff.columns:
+            diff_eng_list = sorted(filtered_diff['Eng Name'].dropna().unique())
+            selected_diff_eng = st.selectbox(
+                "♻️ Filter by Different Tab's Engineer:",
+                options=["All Engineers"] + list(diff_eng_list),
+                key="diff_eng_filter" # မူရင်း selectbox နှင့် မငြိစေရန် unique key ပေးခြင်း
+            )
+            
+            # Filter အလုပ်လုပ်ခြင်း
+            if selected_diff_eng != "All Engineers":
+                filtered_diff = filtered_diff[filtered_diff['Eng Name'] == selected_diff_eng]
+        
+        if not filtered_diff.empty:
+            # ကိန်းဂဏန်း ကော်လံများကို သေသပ်လှပအောင် float မှ integer/clean number သို့ ပြောင်းလဲခြင်း
+            for col in filtered_diff.columns:
+                if col in ['Out', 'In', 'Usage From Link']:
+                    filtered_diff[col] = pd.to_numeric(filtered_diff[col], errors='coerce')
+                    # .apply သုံးပြီး သုညပြတ်/ဒဿမ ပြတ်အောင် ညှိခြင်း (NaN များကို ဗလာစာသား ထားရန်)
+                    filtered_diff[col] = filtered_diff[col].apply(
+                        lambda x: "" if pd.isna(x) else (int(x) if x % 1 == 0 else round(x, 1))
+                    )
+            
+            # စာသားများကို ဘယ်ကပ်၊ ကိန်းဂဏန်းများကို အလယ်ညှိရန် စနစ်
+            config_diff_table = {
+                'Date': st.column_config.Column(alignment="left"),
+                'Eng Name': st.column_config.Column(alignment="left"),
+                'Product Name': st.column_config.Column(alignment="left"),
+                'Out': st.column_config.Column(alignment="center"),
+                'In': st.column_config.Column(alignment="center"),
+                'Usage From Link': st.column_config.Column(alignment="center")
+            }
+            
+            # ဇယားကို ပြသခြင်း
+            st.dataframe(
+                filtered_diff,
+                use_container_width=True,
+                hide_index=True,
+                column_config=config_diff_table
+            )
+        else:
+            st.warning("⚠️ Different Tab တွင် ဒေတာမှတ်တမ်း မရှိသေးပါ။")
