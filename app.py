@@ -9,18 +9,12 @@ with streamlit_analytics.track():
     st.markdown("<h3 style='text-align: center;'>📱 Eng Usage Checker</h3>", unsafe_allow_html=True)
 
     BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
-    USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
-    OUT_CSV_URL = f"{BASE_URL}/export?format=csv&gid=147444867"
-    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=1623311186"
-
-    @st.cache_data(ttl=30)
+    
+    @st.cache_data(ttl=60)
     def load_all_data():
-        df_usage = pd.read_csv(USAGE_CSV_URL)
-        df_out = pd.read_csv(OUT_CSV_URL)
-        df_diff = pd.read_csv(DIFF_CSV_URL)
-        for df in [df_usage, df_out, df_diff]:
-            if 'Date' in df.columns:
-                df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
+        df_usage = pd.read_csv(f"{BASE_URL}/export?format=csv&gid=0")
+        df_out = pd.read_csv(f"{BASE_URL}/export?format=csv&gid=147444867")
+        df_diff = pd.read_csv(f"{BASE_URL}/export?format=csv&gid=1623311186")
         return df_usage, df_out, df_diff
 
     try:
@@ -29,80 +23,70 @@ with streamlit_analytics.track():
         st.error(f"❌ ဒေတာချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
         st.stop()
 
-    # --- [၁] Usage Data Setup ---
-    # Column အမည်များကို သေချာစေရန် .strip() သုံးခြင်း
-    def standardize_cols(df):
+    # --- Data Cleaning & Mapping ---
+    def clean_and_map(df):
+        df = df.copy()
         df.columns = df.columns.str.strip()
+        # Sleeve column ရှာဖွေခြင်း
+        sleeve_col = next((c for c in df.columns if 'sleeve' in c.lower()), None)
+        
+        mapping = {
+            'Engineer Name': 'Engineer Name',
+            'TKT/POI/CPE': 'TKT/POI',
+            'Patch Cords(SC/APC) 1M': 'PC(1M)',
+            'Patch Cords(SC/APC) 1.5M': 'PC(1.5M)',
+            'Customize (Pencil Kit , white)': 'Customize PK',
+            'Standard (Pencil Kit , white)': 'Standard PK'
+        }
+        if sleeve_col: mapping[sleeve_col] = '2 Sleeves'
+        
+        df = df.rename(columns=mapping)
+        # လိုအပ်သော columns များသာ ထားရှိခြင်း
+        cols = ['Date', 'Engineer Name', 'TKT/POI', 'PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']
+        existing_cols = [c for c in cols if c in df.columns]
+        df = df[existing_cols]
+        # Numeric ပိုင်းအတွက် 0 ဖြည့်ခြင်း
+        for col in existing_cols:
+            if col not in ['Date', 'Engineer Name', 'TKT/POI']:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
         return df
 
-    df_usage = standardize_cols(df_usage)
-    df_out = standardize_cols(df_out)
-    
-    sleeve_col = next((c for c in df_usage.columns if 'sleeve' in c.lower()), 'Sleeve with 2 Steels')
-    cols_map = {
-        'Engineer Name': 'Engineer Name', 'TKT/POI/CPE': 'TKT/POI', 
-        'Patch Cords(SC/APC) 1M': 'PC(1M)', 'Patch Cords(SC/APC) 1.5M': 'PC(1.5M)', 
-        sleeve_col: '2 Sleeves', 'Customize (Pencil Kit , white)': 'Customize PK', 
-        'Standard (Pencil Kit , white)': 'Standard PK'
-    }
-    
-    res_usage = df_usage.rename(columns=cols_map)
-    res_usage = res_usage[['Date', 'Engineer Name', 'TKT/POI', 'PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']]
-    res_out = df_out.rename(columns=cols_map)
+    res_usage = clean_and_map(df_usage)
+    res_out = clean_and_map(df_out)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        sel_eng = st.selectbox("♻️ Filter by Engineer Name:", ["All Engineers"] + sorted(res_usage['Engineer Name'].dropna().unique().tolist()))
-    with col2:
-        sel_date = st.selectbox("📅 Filter by Date:", ["All Dates"] + sorted(res_usage['Date'].dropna().unique().tolist(), reverse=True))
-
+    # Filter
+    engs = ["All Engineers"] + sorted([str(x) for x in res_usage['Engineer Name'].unique() if pd.notna(x)])
+    sel_eng = st.selectbox("♻️ Filter by Engineer Name:", engs)
+    
     if sel_eng != "All Engineers":
         res_usage = res_usage[res_usage['Engineer Name'] == sel_eng]
         res_out = res_out[res_out['Engineer Name'] == sel_eng]
-    if sel_date != "All Dates":
-        res_usage = res_usage[res_usage['Date'] == sel_date]
-        res_out = res_out[res_out['Date'] == sel_date]
 
+    # --- Tables ---
     st.divider()
-    if not res_usage.empty:
-        st.markdown("<h3 style='text-align: center;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
-        # Usage Table အားလုံးကို Center ချခြင်း
-        usage_config = {col: st.column_config.Column(alignment="center") for col in res_usage.columns}
-        st.dataframe(res_usage, use_container_width=True, hide_index=True, column_config=usage_config)
+    st.markdown("<h3 style='text-align: center;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
+    st.dataframe(res_usage, use_container_width=True, hide_index=True, 
+                 column_config={c: st.column_config.Column(alignment="center") for c in res_usage.columns})
 
-        st.markdown("<h3 style='text-align: center;'>📈 Total Usage Summary</h3>", unsafe_allow_html=True)
-        summary = []
-        for col in ['PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']:
-            total = pd.to_numeric(res_usage[col], errors='coerce').sum()
-            out = pd.to_numeric(res_out[col], errors='coerce').sum() if col in res_out.columns else 0
-            summary.append({'Accessories': col, 'Out': int(out), 'Total Usage': int(total), 'Return PM': int(out - total)})
-        
-        summary_df = pd.DataFrame(summary)
-        summary_config = {col: st.column_config.Column(alignment="center") for col in summary_df.columns}
-        st.dataframe(summary_df, use_container_width=True, hide_index=True, column_config=summary_config)
+    st.markdown("<h3 style='text-align: center;'>📈 Total Usage Summary</h3>", unsafe_allow_html=True)
+    summary_data = []
+    for col in ['PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']:
+        total = res_usage[col].sum() if col in res_usage.columns else 0
+        out = res_out[col].sum() if col in res_out.columns else 0
+        summary_data.append({'Accessories': col, 'Out': int(out), 'Total Usage': int(total), 'Return PM': int(out - total)})
+    
+    summary_df = pd.DataFrame(summary_data)
+    st.dataframe(summary_df, use_container_width=True, hide_index=True, 
+                 column_config={c: st.column_config.Column(alignment="center") for c in summary_df.columns})
 
-    # --- [၂] Negative Differences Analysis ---
+    # --- Negative Differences ---
     st.divider()
-    st.markdown("<h4 style='text-align: center; color: #d32f2f;'>📉 Return to PM List Past 5 days</h4>", unsafe_allow_html=True)
-
-    # Unnamed Columns များကို Filter ထုတ်ခြင်း
-    res_diff = df_diff.loc[:, ~df_diff.columns.str.contains('^Unnamed', na=False)]
+    st.markdown("<h4 style='text-align: center; color: #d32f2f;'>📉 Return to PM List</h4>", unsafe_allow_html=True)
     
-    sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + sorted(res_diff['Eng Name'].dropna().unique().tolist()))
+    # Unnamed Columns ဖယ်ရှားပြီး Difference စစ်ဆေးခြင်း
+    res_diff = df_diff.loc[:, ~df_diff.columns.str.contains('^Unnamed')]
+    if 'Difference' in res_diff.columns:
+        res_diff = res_diff[res_diff['Difference'] < 0]
     
-    if sel_diff_eng != "All Engineers":
-        res_diff = res_diff[res_diff['Eng Name'] == sel_diff_eng]
-    
-    res_diff = res_diff[res_diff['Difference'] < 0]
-    
-    if 'Remark' in res_diff.columns:
-        mask = res_diff['Remark'].astype(str).str.lower() != 'done'
-        res_diff = res_diff[mask]
-
-    if not res_diff.empty:
-        # Table Center နှင့် အဓိက Column များသာပြသခြင်း
-        display_cols = [c for c in ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference'] if c in res_diff.columns]
-        diff_config = {col: st.column_config.Column(alignment="center") for col in display_cols}
-        st.dataframe(res_diff[display_cols], use_container_width=True, hide_index=True, height=400, column_config=diff_config)
-    else:
-        st.info("ℹ️ အပ်ရန်ကျန်ရှိသည့်ပစ္စည်းမရှိပါ။")
+    st.dataframe(res_diff, use_container_width=True, hide_index=True, 
+                 column_config={c: st.column_config.Column(alignment="center") for c in res_diff.columns})
