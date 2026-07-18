@@ -17,8 +17,8 @@ with streamlit_analytics.track():
     BASE_URL = "https://docs.google.com/spreadsheets/d/1Gzy3wOg-Ug_PdvxLKzR5Et1-vs6huzaP4lQjioQouKc"
     USAGE_CSV_URL = f"{BASE_URL}/export?format=csv&gid=0"
     OUT_CSV_URL = f"{BASE_URL}/export?format=csv&gid=147444867"
-    # 🆕 Different Tab အတွက် URL အသစ် (gid=1623311186)
-    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=1623311186"
+    # 🆕 Different Tab အတွက် URL အသစ် (gid=162331186)
+    DIFF_CSV_URL = f"{BASE_URL}/export?format=csv&gid=162331186"
 
     @st.cache_data(ttl=30)
     def load_all_data():
@@ -204,61 +204,75 @@ with streamlit_analytics.track():
             st.warning("⚠️ ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် မှတ်တမ်း မရှိသေးပါ။")
 
         # =========================================================================
-        # 🆕 [အသစ်တိုးချဲ့မှု] DIFFERENT TAB DATA DISPLAY SECTION (Column A to F)
+        # 🆕 [ပြင်ဆင်ချက်] DIFFERENT TAB DATA DISPLAY SECTION (Column A to G Filtered)
         # =========================================================================
         st.write("")
         st.divider()
-        st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📋 Different Tab Summary</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; margin-bottom: 15px;'>📋 Different Tab (Pending Items)</h3>", unsafe_allow_html=True)
         
         # ကော်လံအမည်များ၏ ရှေ့/နောက် ကွက်လပ်များကို ရှင်းလင်းခြင်း
         df_diff.columns = [str(col).strip() for col in df_diff.columns]
         
-        # Column A မှ F အထိ ပြသမည့် ကော်လံ ၆ ခုကို သတ်မှတ်ခြင်း
-        diff_target_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link']
+        # 🛠️ Filter Logic: Difference ကော်လံကို ကိန်းဂဏန်းပြောင်းပြီး အနှုတ် (< 0) ဖြစ်တာကို ရှာမည်
+        if 'Difference' in df_diff.columns:
+            df_diff['Difference_num'] = pd.to_numeric(df_diff['Difference'], errors='coerce').fillna(0)
+        else:
+            df_diff['Difference_num'] = 0
+
+        # Remark ကော်လံရှိလျှင် စာသားရှင်းလင်းမည်
+        if 'Remark' in df_diff.columns:
+            df_diff['Remark_clean'] = df_diff['Remark'].astype(str).str.strip().str.lower()
+        else:
+            df_diff['Remark_clean'] = ""
+
+        # ✨ အဓိက စစ်ထုတ်ချက် - Difference က အနှုတ်ပြပြီး Remark က 'done' မဟုတ်တာတွေကိုပဲ ယူမည်
+        condition = (df_diff['Difference_num'] < 0) & (df_diff['Remark_clean'] != 'done')
+        filtered_diff = df_diff[condition].copy()
         
-        # Sheet ထဲတွင် ရှိနေသော ကော်လံများကိုသာ စစ်ထုတ်ယူခြင်း
-        available_diff_cols = [col for col in diff_target_cols if col in df_diff.columns]
-        filtered_diff = df_diff[available_diff_cols].copy()
+        # Column A မှ G အထိ ပြသမည့် ကော်လံ ၇ ခုကို စစ်ထုတ်ယူခြင်း
+        diff_target_cols = ['Date', 'Eng Name', 'Product Name', 'Out', 'In', 'Usage From Link', 'Difference']
+        available_diff_cols = [col for col in diff_target_cols if col in filtered_diff.columns]
+        display_diff = filtered_diff[available_diff_cols].copy()
         
         # Eng Name Column ရှိလျှင် သီးသန့် Filter Box တစ်ခု ဖန်တီးခြင်း (Date Filter မပါပါ)
-        if 'Eng Name' in filtered_diff.columns:
-            diff_eng_list = sorted(filtered_diff['Eng Name'].dropna().unique())
+        if 'Eng Name' in display_diff.columns:
+            diff_eng_list = sorted(display_diff['Eng Name'].dropna().unique())
             selected_diff_eng = st.selectbox(
                 "♻️ Filter by Different Tab's Engineer:",
                 options=["All Engineers"] + list(diff_eng_list),
-                key="diff_eng_filter" # မူရင်း selectbox နှင့် မငြိစေရန် unique key ပေးခြင်း
+                key="diff_eng_filter"
             )
             
             # Filter အလုပ်လုပ်ခြင်း
             if selected_diff_eng != "All Engineers":
-                filtered_diff = filtered_diff[filtered_diff['Eng Name'] == selected_diff_eng]
+                display_diff = display_diff[display_diff['Eng Name'] == selected_diff_eng]
         
-        if not filtered_diff.empty:
+        if not display_diff.empty:
             # ကိန်းဂဏန်း ကော်လံများကို သေသပ်လှပအောင် float မှ integer/clean number သို့ ပြောင်းလဲခြင်း
-            for col in filtered_diff.columns:
-                if col in ['Out', 'In', 'Usage From Link']:
-                    filtered_diff[col] = pd.to_numeric(filtered_diff[col], errors='coerce')
-                    # .apply သုံးပြီး သုညပြတ်/ဒဿမ ပြတ်အောင် ညှိခြင်း (NaN များကို ဗလာစာသား ထားရန်)
-                    filtered_diff[col] = filtered_diff[col].apply(
+            for col in display_diff.columns:
+                if col in ['Out', 'In', 'Usage From Link', 'Difference']:
+                    display_diff[col] = pd.to_numeric(display_diff[col], errors='coerce')
+                    display_diff[col] = display_diff[col].apply(
                         lambda x: "" if pd.isna(x) else (int(x) if x % 1 == 0 else round(x, 1))
                     )
             
-            # စာသားများကို ဘယ်ကပ်၊ ကိန်းဂဏန်းများကို အလယ်ညှိရန် စနစ်
+            # စာသားများကို ဘယ်ကပ်၊ ကိန်းဂဏန်းများနှင့် Difference (Column G) ကို အလယ်ညှိရန် စနစ်
             config_diff_table = {
                 'Date': st.column_config.Column(alignment="left"),
                 'Eng Name': st.column_config.Column(alignment="left"),
                 'Product Name': st.column_config.Column(alignment="left"),
                 'Out': st.column_config.Column(alignment="center"),
                 'In': st.column_config.Column(alignment="center"),
-                'Usage From Link': st.column_config.Column(alignment="center")
+                'Usage From Link': st.column_config.Column(alignment="center"),
+                'Difference': st.column_config.Column(alignment="center") # Column G ကို အလယ်ပို့ခြင်း
             }
             
             # ဇယားကို ပြသခြင်း
             st.dataframe(
-                filtered_diff,
+                display_diff,
                 use_container_width=True,
                 hide_index=True,
                 column_config=config_diff_table
             )
         else:
-            st.warning("⚠️ Different Tab တွင် ဒေတာမှတ်တမ်း မရှိသေးပါ။")
+            st.info("ℹ️ Difference အနှုတ်ပြပြီး Done မဖြစ်သေးသော (Pending) အချက်အလက် မရှိပါ။")
