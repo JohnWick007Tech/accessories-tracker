@@ -30,32 +30,43 @@ with streamlit_analytics.track():
         st.stop()
 
     # --- [၁] Usage Data Setup ---
-    sleeve_col = next((c for c in df_usage.columns if 'sleeve' in c.lower()), 'Sleeve with 2 Steels')
-    cols_map = {'Date': 'Date', 'Engineer Name': 'Engineer Name', 'TKT/POI/CPE': 'TKT/POI', 
-                'Patch Cords(SC/APC) 1M': 'PC(1M)', 'Patch Cords(SC/APC) 1.5M': 'PC(1.5M)', 
-                sleeve_col: '2 Sleeves', 'Customize (Pencil Kit , white)': 'Customize PK', 
-                'Standard (Pencil Kit , white)': 'Standard PK'}
-    
-    # ရွေးထုတ်ထားသော Column များ
-    required_usage_cols = ['Date', 'Engineer Name', 'TKT/POI', 'PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']
-    
-    res_usage = df_usage.rename(columns=cols_map)
-    # လိုအပ်သော column များသာ ရွေးထုတ်ခြင်း
-    res_usage = res_usage[[c for c in required_usage_cols if c in res_usage.columns]]
-    res_out = df_out.rename(columns=cols_map)
+    # Column အမည်များကို ပိုမိုသေချာစေရန် function တစ်ခုသုံးခြင်း
+    def standardize_df(df):
+        new_cols = {}
+        for col in df.columns:
+            clean_col = col.strip()
+            if 'sleeve' in clean_col.lower() and '2' in clean_col:
+                new_cols[col] = '2 Sleeves'
+            elif 'patch cords' in clean_col.lower() and '1m' in clean_col.lower():
+                new_cols[col] = 'PC(1M)'
+            elif 'patch cords' in clean_col.lower() and '1.5m' in clean_col.lower():
+                new_cols[col] = 'PC(1.5M)'
+            elif 'customize' in clean_col.lower():
+                new_cols[col] = 'Customize PK'
+            elif 'standard' in clean_col.lower():
+                new_cols[col] = 'Standard PK'
+            elif 'tkt' in clean_col.lower() or 'poi' in clean_col.lower() or 'cpe' in clean_col.lower():
+                new_cols[col] = 'TKT/POI'
+            else:
+                new_cols[col] = clean_col
+        return df.rename(columns=new_cols)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        sel_eng = st.selectbox("♻️ Filter by Engineer Name:", ["All Engineers"] + sorted(res_usage['Engineer Name'].dropna().unique().tolist()))
-    with col2:
-        sel_date = st.selectbox("📅 Filter by Date:", ["All Dates"] + sorted(res_usage['Date'].dropna().unique().tolist(), reverse=True))
+    # DataFrames များကို ပြင်ဆင်ခြင်း
+    res_usage = standardize_df(df_usage.copy())
+    res_out = standardize_df(df_out.copy())
+    
+    # လိုအပ်သော column များ ရှိမရှိ စစ်ဆေးပြီးမှ ရွေးထုတ်ခြင်း
+    required_cols = ['Date', 'Engineer Name', 'TKT/POI', 'PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']
+    
+    # res_usage မှာ မရှိတဲ့ column တွေကို 0 နဲ့ ဖြည့်ပေးခြင်း (Error တက်မှာစိုးလို့)
+    for col in required_cols:
+        if col not in res_usage.columns:
+            res_usage[col] = 0
+        if col not in res_out.columns:
+            res_out[col] = 0
 
-    if sel_eng != "All Engineers":
-        res_usage = res_usage[res_usage['Engineer Name'] == sel_eng]
-        res_out = res_out[res_out['Engineer Name'] == sel_eng]
-    if sel_date != "All Dates":
-        res_usage = res_usage[res_usage['Date'] == sel_date]
-        res_out = res_out[res_out['Date'] == sel_date]
+    res_usage = res_usage[required_cols]
+    res_out = res_out[required_cols]
 
     st.divider()
     if not res_usage.empty:
