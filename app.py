@@ -39,7 +39,6 @@ with streamlit_analytics.track():
         st.stop()
 
     # --- [၁] Usage Data Setup ---
-    # Column အမည်များ Strip လုပ်ပြီး Mapping လုပ်ခြင်း
     def clean_and_map(df, mapping):
         df = df.copy()
         df.columns = df.columns.str.strip()
@@ -75,7 +74,8 @@ with streamlit_analytics.track():
     st.divider()
     if not res_usage.empty:
         st.markdown("<h3 style='text-align: center;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
-        usage_config = {col: st.column_config.Column(alignment="center") for col in res_usage.columns if col not in ['Date', 'Engineer Name', 'TKT/POI']}
+        # Usage Table အားလုံး Center ကျစေရန်
+        usage_config = {col: st.column_config.Column(alignment="center") for col in res_usage.columns}
         st.dataframe(res_usage, use_container_width=True, hide_index=True, column_config=usage_config)
 
         st.markdown("<h3 style='text-align: center;'>📈 Total Usage Summary</h3>", unsafe_allow_html=True)
@@ -86,18 +86,26 @@ with streamlit_analytics.track():
             summary.append({'Accessories': col, 'Out': int(out), 'Total Usage': int(total), 'Return PM': int(out - total)})
         
         summary_df = pd.DataFrame(summary)
-        st.dataframe(summary_df, use_container_width=True, hide_index=True)
+        # Summary Table အားလုံး Center ကျစေရန်
+        summary_config = {col: st.column_config.Column(alignment="center") for col in summary_df.columns}
+        st.dataframe(summary_df, use_container_width=True, hide_index=True, column_config=summary_config)
 
     # --- [၂] Negative Differences Analysis ---
     st.divider()
     st.markdown("<h4 style='text-align: center; color: #d32f2f;'>📉 Return to PM List Past 5 days</h4>", unsafe_allow_html=True)
-    sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + sorted(df_diff['Eng Name'].dropna().unique().tolist()))
     
-    res_diff = df_diff[df_diff['Difference'] < 0].copy()
+    # Unnamed Columns များကို အလိုအလျောက် ဖယ်ထုတ်ခြင်း
+    res_diff = df_diff.loc[:, ~df_diff.columns.str.contains('^Unnamed')]
+    
+    sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + sorted(res_diff['Eng Name'].dropna().unique().tolist()))
+    
+    res_diff = res_diff[res_diff['Difference'] < 0].copy()
     if sel_diff_eng != "All Engineers":
         res_diff = res_diff[res_diff['Eng Name'] == sel_diff_eng]
     
     if not res_diff.empty:
-        st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400)
+        # Difference Table အားလုံး Center ကျစေရန်
+        diff_config = {col: st.column_config.Column(alignment="center") for col in res_diff.columns}
+        st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400, column_config=diff_config)
     else:
         st.info("ℹ️ အပ်ရန်ကျန်ရှိသည့်ပစ္စည်းမရှိပါ။")
