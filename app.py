@@ -5,7 +5,7 @@ import streamlit_analytics2 as streamlit_analytics
 # Page Configuration
 st.set_page_config(page_title="Accessories Tracker", layout="centered", initial_sidebar_state="collapsed")
 
-# CSS - Branding နှင့် Toolbar များဖျောက်ရန်
+# Branding နှင့် Toolbar များဖျောက်ရန်
 st.markdown("""
     <style>
         [data-testid="stDataFrameToolbar"] { display: none !important; }
@@ -38,34 +38,27 @@ with streamlit_analytics.track():
         st.error(f"❌ ဒေတာချိတ်ဆက်မှု အဆင်မပြေပါ- {e}")
         st.stop()
 
-    # --- [၁] Data Standardization ---
-    def standardize_df(df):
-        new_cols = {}
-        for col in df.columns:
-            c = col.strip().lower()
-            if 'sleeve' in c and '2' in c: new_cols[col] = '2 Sleeves'
-            elif 'patch cords' in c and '1m' in c: new_cols[col] = 'PC(1M)'
-            elif 'patch cords' in c and '1.5m' in c: new_cols[col] = 'PC(1.5M)'
-            elif 'customize' in c: new_cols[col] = 'Customize PK'
-            elif 'standard' in c: new_cols[col] = 'Standard PK'
-            elif 'tkt' in c or 'poi' in c or 'cpe' in c: new_cols[col] = 'TKT/POI'
-            else: new_cols[col] = col.strip()
-        return df.rename(columns=new_cols)
+    # --- [၁] Usage Data Setup ---
+    # Column အမည်များ Strip လုပ်ပြီး Mapping လုပ်ခြင်း
+    def clean_and_map(df, mapping):
+        df = df.copy()
+        df.columns = df.columns.str.strip()
+        return df.rename(columns=mapping)
 
-    res_usage = standardize_df(df_usage.copy())
-    res_out = standardize_df(df_out.copy())
+    sleeve_col = next((c for c in df_usage.columns if 'sleeve' in c.lower()), 'Sleeve with 2 Steels')
+    cols_map = {
+        'Date': 'Date', 'Engineer Name': 'Engineer Name', 'TKT/POI/CPE': 'TKT/POI', 
+        'Patch Cords(SC/APC) 1M': 'PC(1M)', 'Patch Cords(SC/APC) 1.5M': 'PC(1.5M)', 
+        sleeve_col: '2 Sleeves', 'Customize (Pencil Kit , white)': 'Customize PK', 
+        'Standard (Pencil Kit , white)': 'Standard PK'
+    }
     
-    required_cols = ['Date', 'Engineer Name', 'TKT/POI', 'PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']
+    res_usage = clean_and_map(df_usage, cols_map)
+    res_out = clean_and_map(df_out, cols_map)
     
-    # Missing columns ထည့်ပေးခြင်း
-    for col in required_cols:
-        if col not in res_usage.columns: res_usage[col] = 0
-        if col not in res_out.columns: res_out[col] = 0
+    required_usage_cols = ['Date', 'Engineer Name', 'TKT/POI', 'PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']
+    res_usage = res_usage[[c for c in required_usage_cols if c in res_usage.columns]]
 
-    res_usage = res_usage[required_cols]
-    res_out = res_out[required_cols]
-
-    # Filters
     col1, col2 = st.columns(2)
     with col1:
         sel_eng = st.selectbox("♻️ Filter by Engineer Name:", ["All Engineers"] + sorted(res_usage['Engineer Name'].dropna().unique().tolist()))
@@ -80,33 +73,29 @@ with streamlit_analytics.track():
         res_out = res_out[res_out['Date'] == sel_date]
 
     st.divider()
-
-    # R1-Link Table
     if not res_usage.empty:
         st.markdown("<h3 style='text-align: center;'>📊 Engineers R1-Link Table</h3>", unsafe_allow_html=True)
         usage_config = {col: st.column_config.Column(alignment="center") for col in res_usage.columns if col not in ['Date', 'Engineer Name', 'TKT/POI']}
         st.dataframe(res_usage, use_container_width=True, hide_index=True, column_config=usage_config)
 
-        # Summary Table
         st.markdown("<h3 style='text-align: center;'>📈 Total Usage Summary</h3>", unsafe_allow_html=True)
         summary = []
         for col in ['PC(1M)', 'PC(1.5M)', '2 Sleeves', 'Customize PK', 'Standard PK']:
-            total = pd.to_numeric(res_usage[col], errors='coerce').sum()
-            out = pd.to_numeric(res_out[col], errors='coerce').sum()
+            total = pd.to_numeric(res_usage[col], errors='coerce').sum() if col in res_usage.columns else 0
+            out = pd.to_numeric(res_out[col], errors='coerce').sum() if col in res_out.columns else 0
             summary.append({'Accessories': col, 'Out': int(out), 'Total Usage': int(total), 'Return PM': int(out - total)})
         
         summary_df = pd.DataFrame(summary)
         st.dataframe(summary_df, use_container_width=True, hide_index=True)
 
-    # --- [၂] Negative Differences ---
+    # --- [၂] Negative Differences Analysis ---
     st.divider()
-    st.markdown("<h4 style='text-align: center; color: #d32f2f;'>📉 Return to PM List</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #d32f2f;'>📉 Return to PM List Past 5 days</h4>", unsafe_allow_html=True)
     sel_diff_eng = st.selectbox("👤 Select Engineer (Diff):", ["All Engineers"] + sorted(df_diff['Eng Name'].dropna().unique().tolist()))
     
-    res_diff = df_diff.copy()
+    res_diff = df_diff[df_diff['Difference'] < 0].copy()
     if sel_diff_eng != "All Engineers":
         res_diff = res_diff[res_diff['Eng Name'] == sel_diff_eng]
-    res_diff = res_diff[res_diff['Difference'] < 0]
     
     if not res_diff.empty:
         st.dataframe(res_diff, use_container_width=True, hide_index=True, height=400)
